@@ -20,6 +20,70 @@ By default, review unstaged changes from `git diff`. The user may specify differ
 
 **Code Quality**: Evaluate significant issues like code duplication, missing critical error handling, accessibility problems, and inadequate test coverage.
 
+## Test Quality Review (Khorikov's Four Pillars)
+
+When reviewing tests, evaluate them against the Four Pillars of Good Tests:
+
+### 1. Protection Against Regressions
+- Does the test effectively detect bugs?
+- Does it cover complex business logic and important code paths?
+- Does it protect core domain functionality?
+
+### 2. Resistance to Refactoring (Most Critical - Non-Negotiable)
+- Does the test avoid coupling to implementation details?
+- Does it verify only externally observable behavior, not internal mechanics?
+- Will refactoring (without changing behavior) cause false positives?
+- **Red Flag**: Tests verifying method call counts, argument order, or internal delegation
+
+### 3. Fast Feedback
+- Does the test execute quickly?
+- Can developers run it frequently during development?
+
+### 4. Maintainability
+- Is the test easy to understand at a glance?
+- Is the setup minimal and clear?
+- Does it follow the Arrange-Act-Assert (AAA) pattern?
+
+## Classical Approach Verification
+
+Verify adherence to the Classical (Detroit) school of testing:
+
+**Unit = Behavior Unit**
+- Tests should verify behavior, not individual classes
+- A behavior may span multiple collaborating classes
+
+**Test Case Isolation**
+- Tests should not interfere with each other
+- Tests should be parallelizable
+
+**Test Double Usage**
+- Shared dependencies only (DB, file system) → Test doubles
+- Private dependencies (in-memory objects) → Use real instances
+- **Avoid**: Over-mocking (London school anti-pattern)
+
+## Test Style Appropriateness
+
+Verify tests use the appropriate style (in order of preference):
+
+1. **Output-based** (Highest preference): Pure function tests verifying only return values. Best refactoring resistance.
+2. **State-based** (Medium): Verify state changes after operations. Good refactoring resistance if only checking public state.
+3. **Communication-based** (Use sparingly): Mock-based interaction verification. Lowest refactoring resistance. Only use for unmanaged dependencies (external systems).
+
+## Mock vs Stub Usage (CQS Principle)
+
+**Mocks (Commands)**
+- For outgoing interactions (side effects)
+- Only for unmanaged dependencies (external APIs, message buses, email)
+- Verify interactions
+
+**Stubs (Queries)**
+- For incoming data provision
+- **Never verify interactions with stubs** - this is over-specification
+
+**Managed vs Unmanaged Dependencies**
+- Managed (e.g., application DB): Do NOT mock. Use real instances in integration tests.
+- Unmanaged (e.g., external APIs): Mock to verify contract compliance.
+
 ## Confidence Scoring
 
 Rate each potential issue on a scale from 0-100:
