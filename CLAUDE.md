@@ -10,7 +10,7 @@
 
 - **Human-in-the-loop**: AI生成コードには品質・セキュリティリスクがあります。実装とPRマージ時には人間によるレビューが必須です。
 - **段階的な自動化**: 低リスクなタスクは自動化し、セキュリティ関連のコードは人間によるレビューを必要とします。
-- 詳細なリスク分析は `.claude/docs/ai-auto-pr-workflow-concerns.md` を参照してください。
+- 詳細なリスク分析は `.claude/rules/ai-auto-pr-workflow-concerns.md` を参照してください。
 
 ## アーキテクチャ（どのように）
 
@@ -22,7 +22,7 @@
 │   ├── commands/    # スラッシュコマンド (*.md)
 │   ├── skills/      # ドメイン固有の知識（プロジェクト固有のDB schema、API specs等。現在未使用）
 │   ├── agents/      # サブエージェント設定
-│   └── docs/        # 詳細ドキュメント
+│   └── rules/       # モジュール化されたルール・ドキュメント (paths指定で条件付き読み込み可能)
 ├── plans/           # ワークスペース横断的な実装計画（apps/配下以外）
 └── apps/
     ├── backend/docs/plans/      # バックエンド固有の実装計画（独立リポジトリ）
@@ -32,7 +32,7 @@
 
 ### ワークフロー
 
-ワークフローフェーズと複合コマンドについては `.claude/docs/implementation.md` を参照してください。
+ワークフローフェーズと複合コマンドについては `.claude/rules/implementation.md` を参照してください。
 
 **クイックリファレンス:**
 
@@ -65,11 +65,11 @@
 
 ### GitHub CLI の使用
 
-プロキシ環境のサポートについては `.claude/docs/github-cli.md` を参照してください。
+プロキシ環境のサポートについては `.claude/rules/github-cli.md` を参照してください。
 
 ## 実装ワークフロー
 
-詳細なワークフロー手順は `.claude/docs/implementation.md` を参照してください。
+詳細なワークフロー手順は `.claude/rules/implementation.md` を参照してください。
 
 **すべてのケースで必須:** `/update-claude-md` と `/commit-push-pr`
 
