@@ -1,3 +1,7 @@
+---
+paths: /never/match/folder/**
+---
+
 # 上流リソース追跡ガイド
 
 ## 目的
