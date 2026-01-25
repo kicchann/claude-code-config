@@ -10,6 +10,18 @@
           }
         ]
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "./.claude/hooks/format-code.py",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
