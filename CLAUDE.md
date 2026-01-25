@@ -69,6 +69,10 @@
 
 プロキシ環境のサポートについては `.claude/rules/github-cli.md` を参照してください。
 
+### スキルの上流追跡
+
+外部リソースを参照するスキルの更新管理については `.claude/rules/upstream-tracking-guide.md` を参照してください。
+
 ## 実装ワークフロー
 
 詳細なワークフロー手順は `.claude/rules/implementation.md` を参照してください。
