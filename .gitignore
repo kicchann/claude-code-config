@@ -19,3 +19,7 @@ Thumbs.db
 
 # Development
 apps/
+
+# User-specific hook settings
+.claude/hooks/format-code/settings.json
+.claude/settings.local.json
