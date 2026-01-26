@@ -26,21 +26,67 @@ def load_settings() -> dict:
         return json.load(f)
 
 
+def validate_formatter_entry(entry: dict, index: int) -> list[str]:
+    """
+    Validate a single formatter entry.
+    Returns list of error messages (empty if valid).
+    """
+    errors = []
+
+    if not isinstance(entry, dict):
+        errors.append(f"Formatter [{index}]: must be an object")
+        return errors
+
+    extensions = entry.get("extensions")
+    if extensions is None:
+        errors.append(f"Formatter [{index}]: missing 'extensions' field")
+    elif not isinstance(extensions, list):
+        errors.append(f"Formatter [{index}]: 'extensions' must be a list")
+    elif not all(isinstance(ext, str) for ext in extensions):
+        errors.append(f"Formatter [{index}]: all extensions must be strings")
+
+    commands = entry.get("commands")
+    if commands is None:
+        errors.append(f"Formatter [{index}]: missing 'commands' field")
+    elif not isinstance(commands, list):
+        errors.append(f"Formatter [{index}]: 'commands' must be a list")
+    elif not all(isinstance(cmd, list) for cmd in commands):
+        errors.append(f"Formatter [{index}]: each command must be a list")
+
+    return errors
+
+
 def build_formatter_map(settings: dict) -> dict:
     """
     Build a mapping from file extension to list of commands.
     Returns: {'.py': [['ruff', 'format', '{file}'], ['black', '{file}']], ...}
     Only includes formatters where enabled is true (default: true).
+    Merges commands if same extension appears multiple times.
     """
     formatter_map = {}
-    for entry in settings.get("formatters", []):
+    for i, entry in enumerate(settings.get("formatters", [])):
+        # Validate entry
+        errors = validate_formatter_entry(entry, i)
+        if errors:
+            for err in errors:
+                print(f"Warning: {err}", file=sys.stderr)
+            continue
+
         # Skip disabled formatters (enabled defaults to true)
         if not entry.get("enabled", True):
             continue
+
         extensions = entry.get("extensions", [])
         commands = entry.get("commands", [])
+
         for ext in extensions:
-            formatter_map[ext.lower()] = commands
+            ext_lower = ext.lower()
+            if ext_lower in formatter_map:
+                # Merge commands for duplicate extensions
+                formatter_map[ext_lower].extend(commands)
+            else:
+                formatter_map[ext_lower] = list(commands)
+
     return formatter_map
 
 
@@ -53,7 +99,7 @@ def detect_language(code: str) -> str:
         try:
             json.loads(s)
             return 'json'
-        except:
+        except json.JSONDecodeError:
             pass
 
     # Python detection
@@ -89,19 +135,38 @@ def detect_language(code: str) -> str:
 
 def format_markdown(content: str) -> str:
     """Format markdown content with language detection."""
+    # Pattern for matching code fences (with optional trailing whitespace for replacement)
+    fence_pattern = r'(?ms)^([ \t]{0,3})```([^\n]*)\n(.*?)(\n\1```)'
+
     # Fix unlabeled code fences
     def add_lang_to_fence(match):
         indent, info, body, closing = match.groups()
         if not info.strip():
             lang = detect_language(body)
-            return f"{indent}```{lang}\n{body}{closing}\n"
+            return f"{indent}```{lang}\n{body}{closing}"
         return match.group(0)
 
-    fence_pattern = r'(?ms)^([ \t]{0,3})```([^\n]*)\n(.*?)(\n\1```)\s*$'
     content = re.sub(fence_pattern, add_lang_to_fence, content)
 
-    # Fix excessive blank lines (only outside code fences)
-    content = re.sub(r'\n{3,}', '\n\n', content)
+    # Fix excessive blank lines ONLY outside code fences
+    # Split content by code fences and process only non-fence parts
+    parts = []
+    last_end = 0
+    for match in re.finditer(fence_pattern, content):
+        # Process text before this fence
+        before_fence = content[last_end:match.start()]
+        before_fence = re.sub(r'\n{3,}', '\n\n', before_fence)
+        parts.append(before_fence)
+        # Keep fence as-is
+        parts.append(match.group(0))
+        last_end = match.end()
+
+    # Process remaining text after last fence
+    after_last = content[last_end:]
+    after_last = re.sub(r'\n{3,}', '\n\n', after_last)
+    parts.append(after_last)
+
+    content = ''.join(parts)
 
     return content.rstrip() + '\n'
 
