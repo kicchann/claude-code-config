@@ -30,9 +30,13 @@ def build_formatter_map(settings: dict) -> dict:
     """
     Build a mapping from file extension to list of commands.
     Returns: {'.py': [['ruff', 'format', '{file}'], ['black', '{file}']], ...}
+    Only includes formatters where enabled is true (default: true).
     """
     formatter_map = {}
     for entry in settings.get("formatters", []):
+        # Skip disabled formatters (enabled defaults to true)
+        if not entry.get("enabled", True):
+            continue
         extensions = entry.get("extensions", [])
         commands = entry.get("commands", [])
         for ext in extensions:

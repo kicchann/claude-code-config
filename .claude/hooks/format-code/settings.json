@@ -5,57 +5,66 @@
       "commands": [
         ["ruff", "format", "{file}"],
         ["black", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
       "commands": [
         ["prettier", "--write", "{file}"],
         ["eslint", "--fix", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".json", ".yaml", ".yml"],
       "commands": [
         ["prettier", "--write", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".sh", ".bash"],
       "commands": [
         ["shfmt", "-i", "2", "-w", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".go"],
       "commands": [
         ["gofmt", "-w", "{file}"],
         ["goimports", "-w", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".rs"],
       "commands": [
         ["rustfmt", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".css", ".scss", ".less"],
       "commands": [
         ["prettier", "--write", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".html", ".htm"],
       "commands": [
         ["prettier", "--write", "{file}"]
-      ]
+      ],
+      "enabled": true
     },
     {
       "extensions": [".md", ".mdx"],
       "commands": [
         ["__markdown__"]
-      ]
+      ],
+      "enabled": true
     }
   ]
 }
