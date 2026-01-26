@@ -6,10 +6,10 @@ Write/Edit操作時に自動でファイルをフォーマットするPostToolUs
 
 ```
 .claude/hooks/format-code/
-├── format-code.py      # メインスクリプト
-├── settings.json       # フォーマッター設定
-├── hooks.json.example  # Claude Code hook設定例
-├── README.md           # このファイル
+├── format-code.py         # メインスクリプト
+├── settings.json.example  # フォーマッター設定テンプレート
+├── hooks.json.example     # Claude Code hook設定例
+├── README.md              # このファイル
 └── test/
     └── test_format_code.py  # pytestテスト
 ```
@@ -60,6 +60,12 @@ Write/Edit操作時に自動でファイルをフォーマットするPostToolUs
 ```
 
 ## 設定
+
+`settings.json.example`をコピーして`settings.json`を作成:
+
+```bash
+cp .claude/hooks/format-code/settings.json.example .claude/hooks/format-code/settings.json
+```
 
 `settings.json`でフォーマッターを設定:
 
