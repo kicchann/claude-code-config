@@ -20,23 +20,24 @@ Write/Edit操作時に自動でファイルをフォーマットするPostToolUs
 
 - **自動フォーマット**: Write/Edit操作時にファイルを自動フォーマット
 - **拡張子ベース検出**: ファイル拡張子で適切なformatterを選択
-- **フォールバック**: 複数コマンドを順番に試行
+- **Step順次実行**: format → lint fix のように複数Stepを順次実行
+- **Step内フォールバック**: 各Step内で複数コマンドを順番に試行（最初に成功したものを使用）
 - **有効/無効切替**: `enabled`フラグで個別制御可能
 - **バリデーション**: 設定ファイルの構造を検証
 
 ## 対応フォーマッター
 
-| 拡張子 | ツール |
-|--------|--------|
-| `.py`, `.pyi` | ruff format → black |
-| `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.cjs` | prettier → eslint |
-| `.json`, `.yaml`, `.yml` | prettier |
-| `.sh`, `.bash` | shfmt |
-| `.go` | gofmt → goimports |
-| `.rs` | rustfmt |
-| `.css`, `.scss`, `.less` | prettier |
-| `.html`, `.htm` | prettier |
-| `.md`, `.mdx` | 内蔵markdown formatter |
+| 拡張子 | Step 1 (format) | Step 2 (lint fix) |
+|--------|-----------------|-------------------|
+| `.py`, `.pyi` | ruff format / black | ruff check --fix |
+| `.js`, `.jsx`, `.ts`, `.tsx`, `.mjs`, `.cjs` | prettier | eslint --fix |
+| `.json`, `.yaml`, `.yml` | prettier | — |
+| `.sh`, `.bash` | shfmt | — |
+| `.go` | gofmt | goimports |
+| `.rs` | rustfmt | — |
+| `.css`, `.scss`, `.less` | prettier | — |
+| `.html`, `.htm` | prettier | — |
+| `.md`, `.mdx` | 内蔵markdown formatter | — |
 
 ## セットアップ
 
@@ -193,8 +194,8 @@ cp .claude/hooks/format-code/settings.json.example .claude/hooks/format-code/set
     {
       "extensions": [".py", ".pyi"],
       "commands": [
-        ["ruff", "format", "{file}"],
-        ["black", "{file}"]
+        [["ruff", "format", "{file}"], ["black", "{file}"]],
+        [["ruff", "check", "--fix", "{file}"]]
       ],
       "install_hint": "pip install ruff  (or: pip install black)",
       "enabled": true
@@ -204,11 +205,12 @@ cp .claude/hooks/format-code/settings.json.example .claude/hooks/format-code/set
 ```
 
 - `extensions`: 対象の拡張子（複数指定可）
-- `commands`: 実行するコマンド（`{file}`はファイルパスに置換）
+- `commands`: Step の配列。各 Step は代替コマンドの配列（`{file}`はファイルパスに置換）
+  - **Step 間**: 順次実行（すべて実行。例: format → lint fix）
+  - **Step 内**: フォールバック（最初に成功したコマンドで次の Step へ）
 - `install_hint`: フォーマッター未インストール時に表示するインストール方法（オプション）
 - `enabled`: 有効/無効の切り替え（デフォルト: true）
-- 複数コマンドは順番に試行し、最初に成功したものを使用
-- 全コマンドが未インストールの場合、警告とインストール方法を表示
+- 全 Step の全コマンドが未インストールの場合のみ、警告とインストール方法を表示
 
 ## エラー表示の仕組み
 
