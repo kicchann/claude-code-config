@@ -3,8 +3,8 @@
     {
       "extensions": [".py", ".pyi"],
       "commands": [
-        ["ruff", "format", "{file}"],
-        ["black", "{file}"]
+        [["ruff", "format", "{file}"], ["black", "{file}"]],
+        [["ruff", "check", "--fix", "{file}"]]
       ],
       "install_hint": "pip install ruff  (or: pip install black)",
       "enabled": true
@@ -12,8 +12,8 @@
     {
       "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
       "commands": [
-        ["prettier", "--write", "{file}"],
-        ["eslint", "--fix", "{file}"]
+        [["prettier", "--write", "{file}"]],
+        [["eslint", "--fix", "{file}"]]
       ],
       "install_hint": "npm install -g prettier  (or: npm install -g eslint)",
       "enabled": true
@@ -21,7 +21,7 @@
     {
       "extensions": [".json", ".yaml", ".yml"],
       "commands": [
-        ["prettier", "--write", "{file}"]
+        [["prettier", "--write", "{file}"]]
       ],
       "install_hint": "npm install -g prettier",
       "enabled": true
@@ -29,7 +29,7 @@
     {
       "extensions": [".sh", ".bash"],
       "commands": [
-        ["shfmt", "-i", "2", "-w", "{file}"]
+        [["shfmt", "-i", "2", "-w", "{file}"]]
       ],
       "install_hint": "go install mvdan.cc/sh/v3/cmd/shfmt@latest  (or: brew install shfmt)",
       "enabled": true
@@ -37,8 +37,8 @@
     {
       "extensions": [".go"],
       "commands": [
-        ["gofmt", "-w", "{file}"],
-        ["goimports", "-w", "{file}"]
+        [["gofmt", "-w", "{file}"]],
+        [["goimports", "-w", "{file}"]]
       ],
       "install_hint": "Go toolchain includes gofmt. goimports: go install golang.org/x/tools/cmd/goimports@latest",
       "enabled": true
@@ -46,7 +46,7 @@
     {
       "extensions": [".rs"],
       "commands": [
-        ["rustfmt", "{file}"]
+        [["rustfmt", "{file}"]]
       ],
       "install_hint": "rustup component add rustfmt",
       "enabled": true
@@ -54,7 +54,7 @@
     {
       "extensions": [".css", ".scss", ".less"],
       "commands": [
-        ["prettier", "--write", "{file}"]
+        [["prettier", "--write", "{file}"]]
       ],
       "install_hint": "npm install -g prettier",
       "enabled": true
@@ -62,7 +62,7 @@
     {
       "extensions": [".html", ".htm"],
       "commands": [
-        ["prettier", "--write", "{file}"]
+        [["prettier", "--write", "{file}"]]
       ],
       "install_hint": "npm install -g prettier",
       "enabled": true
@@ -70,7 +70,7 @@
     {
       "extensions": [".md", ".mdx"],
       "commands": [
-        ["__markdown__"]
+        [["__markdown__"]]
       ],
       "enabled": true
     }

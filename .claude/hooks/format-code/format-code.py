@@ -30,6 +30,8 @@ def load_settings() -> dict:
 def validate_formatter_entry(entry: dict, index: int) -> list[str]:
     """
     Validate a single formatter entry.
+    commands must be Array<Step> where Step = Array<Alternative> and
+    Alternative = Array<string>.
     Returns list of error messages (empty if valid).
     """
     errors = []
@@ -51,8 +53,14 @@ def validate_formatter_entry(entry: dict, index: int) -> list[str]:
         errors.append(f"Formatter [{index}]: missing 'commands' field")
     elif not isinstance(commands, list):
         errors.append(f"Formatter [{index}]: 'commands' must be a list")
-    elif not all(isinstance(cmd, list) for cmd in commands):
-        errors.append(f"Formatter [{index}]: each command must be a list")
+    elif not all(isinstance(step, list) for step in commands):
+        errors.append(f"Formatter [{index}]: each step must be a list")
+    elif not all(
+        isinstance(alt, list) for step in commands for alt in step
+    ):
+        errors.append(
+            f"Formatter [{index}]: each alternative in a step must be a list"
+        )
 
     return errors
 
@@ -213,6 +221,9 @@ def run_formatter(cmd_args: list, file_path: str) -> str:
 def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
     """
     Format a file based on its extension.
+    commands is Array<Step> where Step = Array<Alternative>.
+    Steps are executed sequentially (all run). Within each step,
+    alternatives are tried as fallback (first success wins).
     Returns (success, message).
     """
     if not os.path.exists(file_path):
@@ -227,44 +238,58 @@ def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
     config = formatter_map[ext]
     commands = config["commands"]
     install_hint = config.get("install_hint", "")
+
+    any_found = False
     missing_cmds = []
+    success_messages = []
 
-    for cmd_args in commands:
-        if not cmd_args:
-            continue
+    for step in commands:
+        for alt in step:
+            if not alt:
+                continue
 
-        # Special case: built-in markdown formatter
-        if cmd_args[0] == "__markdown__":
-            try:
-                with open(file_path, "r", encoding="utf-8") as f:
-                    content = f.read()
+            # Special case: built-in markdown formatter
+            if alt[0] == "__markdown__":
+                try:
+                    with open(file_path, "r", encoding="utf-8") as f:
+                        content = f.read()
 
-                formatted = format_markdown(content)
+                    formatted = format_markdown(content)
 
-                if formatted != content:
-                    with open(file_path, "w", encoding="utf-8") as f:
-                        f.write(formatted)
-                    return True, f"Formatted markdown: {file_path}"
-                return True, ""
-            except Exception as e:
-                return False, f"Markdown format error: {e}"
+                    if formatted != content:
+                        with open(file_path, "w", encoding="utf-8") as f:
+                            f.write(formatted)
+                        success_messages.append(
+                            f"Formatted markdown: {file_path}"
+                        )
+                    any_found = True
+                    break
+                except Exception as e:
+                    return False, f"Markdown format error: {e}"
 
-        # Try external formatter
-        status = run_formatter(cmd_args, file_path)
-        if status == "success":
-            return True, f"Formatted with {cmd_args[0]}: {file_path}"
-        elif status == "not_found":
-            missing_cmds.append(cmd_args[0])
+            # Try external formatter
+            status = run_formatter(alt, file_path)
+            if status == "success":
+                success_messages.append(
+                    f"Formatted with {alt[0]}: {file_path}"
+                )
+                any_found = True
+                break
+            elif status == "not_found":
+                missing_cmds.append(alt[0])
+                continue
+            else:  # failed
+                any_found = True
+                break
 
-    # All formatters missing → warn user
-    if missing_cmds:
+    # All commands across all steps missing → warn user
+    if not any_found and missing_cmds:
         msg = f"⚠️ FORMAT ERROR: Formatter not found for '{ext}': {', '.join(missing_cmds)}"
         if install_hint:
             msg += f"\n   💡 Install: {install_hint}"
         return False, msg
 
-    # Formatters exist but all failed
-    return True, ""
+    return True, "; ".join(success_messages) if success_messages else ""
 
 
 def main():

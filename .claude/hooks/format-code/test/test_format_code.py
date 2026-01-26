@@ -1,13 +1,10 @@
 """Tests for format-code hook."""
 
 import importlib.util
-import json
 import os
-import sys
 import tempfile
 from pathlib import Path
 
-import pytest
 
 # Load module with hyphen in name using importlib
 module_path = Path(__file__).parent.parent / "format-code.py"
@@ -121,12 +118,26 @@ class TestValidateFormatterEntry:
     """Tests for settings validation."""
 
     def test_valid_entry(self):
-        entry = {"extensions": [".py"], "commands": [["ruff", "format", "{file}"]]}
+        entry = {
+            "extensions": [".py"],
+            "commands": [[["ruff", "format", "{file}"]]],
+        }
+        errors = validate_formatter_entry(entry, 0)
+        assert errors == []
+
+    def test_valid_entry_with_alternatives(self):
+        entry = {
+            "extensions": [".py"],
+            "commands": [
+                [["ruff", "format", "{file}"], ["black", "{file}"]],
+                [["ruff", "check", "--fix", "{file}"]],
+            ],
+        }
         errors = validate_formatter_entry(entry, 0)
         assert errors == []
 
     def test_missing_extensions(self):
-        entry = {"commands": [["ruff"]]}
+        entry = {"commands": [[["ruff"]]]}
         errors = validate_formatter_entry(entry, 0)
         assert any("extensions" in e for e in errors)
 
@@ -136,7 +147,7 @@ class TestValidateFormatterEntry:
         assert any("commands" in e for e in errors)
 
     def test_extensions_not_list(self):
-        entry = {"extensions": ".py", "commands": [["ruff"]]}
+        entry = {"extensions": ".py", "commands": [[["ruff"]]]}
         errors = validate_formatter_entry(entry, 0)
         assert any("must be a list" in e for e in errors)
 
@@ -145,10 +156,15 @@ class TestValidateFormatterEntry:
         errors = validate_formatter_entry(entry, 0)
         assert any("must be a list" in e for e in errors)
 
-    def test_command_item_not_list(self):
+    def test_step_not_list(self):
         entry = {"extensions": [".py"], "commands": ["ruff"]}
         errors = validate_formatter_entry(entry, 0)
-        assert any("each command must be a list" in e for e in errors)
+        assert any("each step must be a list" in e for e in errors)
+
+    def test_alternative_not_list(self):
+        entry = {"extensions": [".py"], "commands": [["ruff"]]}
+        errors = validate_formatter_entry(entry, 0)
+        assert any("each alternative in a step must be a list" in e for e in errors)
 
     def test_non_dict_entry(self):
         errors = validate_formatter_entry("invalid", 0)
@@ -161,12 +177,15 @@ class TestBuildFormatterMap:
     def test_basic_mapping(self):
         settings = {
             "formatters": [
-                {"extensions": [".py"], "commands": [["ruff", "format", "{file}"]]}
+                {
+                    "extensions": [".py"],
+                    "commands": [[["ruff", "format", "{file}"]]],
+                }
             ]
         }
         result = build_formatter_map(settings)
         assert ".py" in result
-        assert result[".py"]["commands"] == [["ruff", "format", "{file}"]]
+        assert result[".py"]["commands"] == [[["ruff", "format", "{file}"]]]
         assert result[".py"]["install_hint"] == ""
 
     def test_multiple_extensions(self):
@@ -174,7 +193,7 @@ class TestBuildFormatterMap:
             "formatters": [
                 {
                     "extensions": [".js", ".ts"],
-                    "commands": [["prettier", "--write", "{file}"]],
+                    "commands": [[["prettier", "--write", "{file}"]]],
                 }
             ]
         }
@@ -185,35 +204,45 @@ class TestBuildFormatterMap:
     def test_disabled_formatter(self):
         settings = {
             "formatters": [
-                {"extensions": [".py"], "commands": [["ruff"]], "enabled": False}
+                {
+                    "extensions": [".py"],
+                    "commands": [[["ruff"]]],
+                    "enabled": False,
+                }
             ]
         }
         result = build_formatter_map(settings)
         assert ".py" not in result
 
     def test_enabled_by_default(self):
-        settings = {"formatters": [{"extensions": [".py"], "commands": [["ruff"]]}]}
+        settings = {"formatters": [{"extensions": [".py"], "commands": [[["ruff"]]]}]}
         result = build_formatter_map(settings)
         assert ".py" in result
 
     def test_duplicate_extension_merge(self):
-        """Issue 2: Duplicate extensions should merge commands."""
+        """Duplicate extensions should merge steps."""
         settings = {
             "formatters": [
-                {"extensions": [".py"], "commands": [["ruff", "format", "{file}"]]},
-                {"extensions": [".py"], "commands": [["black", "{file}"]]},
+                {
+                    "extensions": [".py"],
+                    "commands": [[["ruff", "format", "{file}"]]],
+                },
+                {
+                    "extensions": [".py"],
+                    "commands": [[["black", "{file}"]]],
+                },
             ]
         }
         result = build_formatter_map(settings)
         assert ".py" in result
-        # Both commands should be present
+        # Both steps should be present
         assert len(result[".py"]["commands"]) == 2
-        assert ["ruff", "format", "{file}"] in result[".py"]["commands"]
-        assert ["black", "{file}"] in result[".py"]["commands"]
+        assert [["ruff", "format", "{file}"]] in result[".py"]["commands"]
+        assert [["black", "{file}"]] in result[".py"]["commands"]
 
     def test_case_insensitive_extension(self):
         settings = {
-            "formatters": [{"extensions": [".PY", ".Py"], "commands": [["ruff"]]}]
+            "formatters": [{"extensions": [".PY", ".Py"], "commands": [[["ruff"]]]}]
         }
         result = build_formatter_map(settings)
         assert ".py" in result
@@ -222,7 +251,7 @@ class TestBuildFormatterMap:
         settings = {
             "formatters": [
                 {"extensions": ".py"},  # Invalid: missing commands
-                {"extensions": [".js"], "commands": [["prettier"]]},
+                {"extensions": [".js"], "commands": [[["prettier"]]]},
             ]
         }
         result = build_formatter_map(settings)
@@ -259,7 +288,10 @@ class TestFormatFile:
             f.flush()
             try:
                 formatter_map = {
-                    ".md": {"commands": [["__markdown__"]], "install_hint": ""}
+                    ".md": {
+                        "commands": [[["__markdown__"]]],
+                        "install_hint": "",
+                    }
                 }
                 success, message = format_file(f.name, formatter_map)
                 assert success
@@ -267,5 +299,132 @@ class TestFormatFile:
                 with open(f.name, "r") as rf:
                     content = rf.read()
                 assert "```python" in content
+            finally:
+                os.unlink(f.name)
+
+    def test_all_steps_executed(self, monkeypatch):
+        """All steps should be executed sequentially."""
+        called = []
+
+        def mock_run_formatter(cmd_args, file_path):
+            called.append(cmd_args[0])
+            return "success"
+
+        monkeypatch.setattr(format_code, "run_formatter", mock_run_formatter)
+
+        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+            f.write(b"x = 1")
+            f.flush()
+            try:
+                formatter_map = {
+                    ".py": {
+                        "commands": [
+                            [["fmt1", "{file}"]],
+                            [["lint1", "{file}"]],
+                        ],
+                        "install_hint": "",
+                    }
+                }
+                success, message = format_file(f.name, formatter_map)
+                assert success
+                # Both steps should have been executed
+                assert called == ["fmt1", "lint1"]
+                assert "fmt1" in message
+                assert "lint1" in message
+            finally:
+                os.unlink(f.name)
+
+    def test_fallback_within_step(self, monkeypatch):
+        """Within a step, if first alternative is not_found, try next."""
+        called = []
+
+        def mock_run_formatter(cmd_args, file_path):
+            called.append(cmd_args[0])
+            if cmd_args[0] == "fmt1":
+                return "not_found"
+            return "success"
+
+        monkeypatch.setattr(format_code, "run_formatter", mock_run_formatter)
+
+        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+            f.write(b"x = 1")
+            f.flush()
+            try:
+                formatter_map = {
+                    ".py": {
+                        "commands": [
+                            [["fmt1", "{file}"], ["fmt2", "{file}"]],
+                        ],
+                        "install_hint": "",
+                    }
+                }
+                success, message = format_file(f.name, formatter_map)
+                assert success
+                assert called == ["fmt1", "fmt2"]
+                assert "fmt2" in message
+            finally:
+                os.unlink(f.name)
+
+    def test_step_failure_continues_to_next_step(self, monkeypatch):
+        """If one step fails, other steps should still run."""
+        called = []
+
+        def mock_run_formatter(cmd_args, file_path):
+            called.append(cmd_args[0])
+            if cmd_args[0] == "fmt1":
+                return "failed"
+            return "success"
+
+        monkeypatch.setattr(format_code, "run_formatter", mock_run_formatter)
+
+        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+            f.write(b"x = 1")
+            f.flush()
+            try:
+                formatter_map = {
+                    ".py": {
+                        "commands": [
+                            [["fmt1", "{file}"]],
+                            [["lint1", "{file}"]],
+                        ],
+                        "install_hint": "",
+                    }
+                }
+                success, message = format_file(f.name, formatter_map)
+                assert success
+                # Both steps attempted
+                assert called == ["fmt1", "lint1"]
+                # Only lint1 succeeded
+                assert "lint1" in message
+            finally:
+                os.unlink(f.name)
+
+    def test_all_not_found_returns_error(self, monkeypatch):
+        """If all commands across all steps are not_found, return error."""
+
+        def mock_run_formatter(cmd_args, file_path):
+            return "not_found"
+
+        monkeypatch.setattr(format_code, "run_formatter", mock_run_formatter)
+
+        with tempfile.NamedTemporaryFile(suffix=".py", delete=False) as f:
+            f.write(b"x = 1")
+            f.flush()
+            try:
+                formatter_map = {
+                    ".py": {
+                        "commands": [
+                            [["fmt1", "{file}"]],
+                            [["lint1", "{file}"]],
+                        ],
+                        "install_hint": "pip install fmt1",
+                    }
+                }
+                success, message = format_file(f.name, formatter_map)
+                assert not success
+                assert "FORMAT ERROR" in message
+                assert "fmt1" in message
+                assert "lint1" in message
+                assert "pip install fmt1" in message
             finally:
                 os.unlink(f.name)
