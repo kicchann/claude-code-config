@@ -258,9 +258,9 @@ def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
 
     # All formatters missing → warn user
     if missing_cmds:
-        msg = f"Formatter not found for '{ext}': {', '.join(missing_cmds)}"
+        msg = f"⚠️ FORMAT ERROR: Formatter not found for '{ext}': {', '.join(missing_cmds)}"
         if install_hint:
-            msg += f"\n  Install: {install_hint}"
+            msg += f"\n   💡 Install: {install_hint}"
         return False, msg
 
     # Formatters exist but all failed
@@ -281,17 +281,24 @@ def main():
 
         success, message = format_file(file_path, formatter_map)
 
-        if message:
-            print(message)
-
-        sys.exit(0 if success else 1)
+        if not success and message:
+            # Exit 2 with stderr = blocking error shown to Claude
+            print(message, file=sys.stderr, flush=True)
+            sys.exit(2)
+        elif message:
+            # Success message to stdout
+            print(message, flush=True)
+            sys.exit(0)
+        else:
+            # Silent success
+            sys.exit(0)
 
     except json.JSONDecodeError:
-        print("Error: Invalid JSON input", file=sys.stderr)
-        sys.exit(1)
+        print("⚠️ FORMAT HOOK ERROR: Invalid JSON input", file=sys.stderr, flush=True)
+        sys.exit(2)
     except Exception as e:
-        print(f"Error: {e}", file=sys.stderr)
-        sys.exit(1)
+        print(f"⚠️ FORMAT HOOK ERROR: {e}", file=sys.stderr, flush=True)
+        sys.exit(2)
 
 
 if __name__ == "__main__":
