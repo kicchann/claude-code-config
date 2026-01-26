@@ -22,7 +22,6 @@ Write/Edit操作時に自動でファイルをフォーマットするPostToolUs
 - **拡張子ベース検出**: ファイル拡張子で適切なformatterを選択
 - **Step順次実行**: format → lint fix のように複数Stepを順次実行
 - **有効/無効切替**: `enabled`フラグで個別制御可能
-- **バリデーション**: 設定ファイルの構造を検証
 
 ## 対応フォーマッター
 
@@ -193,8 +192,8 @@ cp .claude/hooks/format-code/settings.json.example .claude/hooks/format-code/set
     {
       "extensions": [".py", ".pyi"],
       "commands": [
-        [["ruff", "format", "{file}"], ["black", "{file}"]],
-        [["ruff", "check", "--fix", "{file}"]]
+        ["ruff", "format", "{file}"],
+        ["ruff", "check", "--fix", "{file}"]
       ],
       "install_hint": "pip install ruff  (or: pip install black)",
       "enabled": true
@@ -251,4 +250,5 @@ pytest .claude/hooks/format-code/test/ -v
 # 手動テスト（コマンドライン）
 echo '{"tool_input": {"file_path": "/path/to/file.py"}}' | python format-code.py
 ```
+
 
