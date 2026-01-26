@@ -2,6 +2,7 @@
 """
 Multi-language formatter/linter for Claude Code PostToolUse hook.
 Runs appropriate linter/formatter based on file extension.
+Configuration is loaded from settings.json in the same directory.
 """
 import json
 import sys
@@ -9,97 +10,34 @@ import re
 import os
 import subprocess
 import shutil
+from pathlib import Path
 
-# File extension to linter/formatter mapping
-# Each entry: extension -> list of (command, args) to try in order
-FORMATTERS = {
-    # Python
-    '.py': [
-        ('ruff', ['format', '{file}']),
-        ('black', ['{file}']),
-    ],
-    '.pyi': [
-        ('ruff', ['format', '{file}']),
-        ('black', ['{file}']),
-    ],
+# Get the directory where this script is located
+SCRIPT_DIR = Path(__file__).parent.resolve()
+SETTINGS_FILE = SCRIPT_DIR / "settings.json"
 
-    # JavaScript/TypeScript
-    '.js': [
-        ('prettier', ['--write', '{file}']),
-        ('eslint', ['--fix', '{file}']),
-    ],
-    '.jsx': [
-        ('prettier', ['--write', '{file}']),
-        ('eslint', ['--fix', '{file}']),
-    ],
-    '.ts': [
-        ('prettier', ['--write', '{file}']),
-        ('eslint', ['--fix', '{file}']),
-    ],
-    '.tsx': [
-        ('prettier', ['--write', '{file}']),
-        ('eslint', ['--fix', '{file}']),
-    ],
-    '.mjs': [
-        ('prettier', ['--write', '{file}']),
-    ],
-    '.cjs': [
-        ('prettier', ['--write', '{file}']),
-    ],
 
-    # JSON/YAML/Config
-    '.json': [
-        ('prettier', ['--write', '{file}']),
-    ],
-    '.yaml': [
-        ('prettier', ['--write', '{file}']),
-    ],
-    '.yml': [
-        ('prettier', ['--write', '{file}']),
-    ],
+def load_settings() -> dict:
+    """Load formatter settings from settings.json."""
+    if not SETTINGS_FILE.exists():
+        return {"formatters": []}
 
-    # Shell
-    '.sh': [
-        ('shfmt', ['-i', '2', '-w', '{file}']),
-    ],
-    '.bash': [
-        ('shfmt', ['-i', '2', '-w', '{file}']),
-    ],
+    with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
 
-    # Go
-    '.go': [
-        ('gofmt', ['-w', '{file}']),
-        ('goimports', ['-w', '{file}']),
-    ],
 
-    # Rust
-    '.rs': [
-        ('rustfmt', ['{file}']),
-    ],
-
-    # CSS/SCSS
-    '.css': [
-        ('prettier', ['--write', '{file}']),
-    ],
-    '.scss': [
-        ('prettier', ['--write', '{file}']),
-    ],
-    '.less': [
-        ('prettier', ['--write', '{file}']),
-    ],
-
-    # HTML
-    '.html': [
-        ('prettier', ['--write', '{file}']),
-    ],
-    '.htm': [
-        ('prettier', ['--write', '{file}']),
-    ],
-
-    # Markdown (use built-in formatter)
-    '.md': [('__markdown__', [])],
-    '.mdx': [('__markdown__', [])],
-}
+def build_formatter_map(settings: dict) -> dict:
+    """
+    Build a mapping from file extension to list of commands.
+    Returns: {'.py': [['ruff', 'format', '{file}'], ['black', '{file}']], ...}
+    """
+    formatter_map = {}
+    for entry in settings.get("formatters", []):
+        extensions = entry.get("extensions", [])
+        commands = entry.get("commands", [])
+        for ext in extensions:
+            formatter_map[ext.lower()] = commands
+    return formatter_map
 
 
 def detect_language(code: str) -> str:
@@ -164,18 +102,27 @@ def format_markdown(content: str) -> str:
     return content.rstrip() + '\n'
 
 
-def run_formatter(cmd: str, args: list, file_path: str) -> bool:
-    """Run a formatter command. Returns True if successful."""
+def run_formatter(cmd_args: list, file_path: str) -> bool:
+    """
+    Run a formatter command.
+    cmd_args: ['ruff', 'format', '{file}'] or similar
+    Returns True if successful.
+    """
+    if not cmd_args:
+        return False
+
+    cmd = cmd_args[0]
+
     # Check if command exists
     if not shutil.which(cmd):
         return False
 
     # Replace {file} placeholder with actual path
-    resolved_args = [arg.replace('{file}', file_path) for arg in args]
+    resolved_args = [arg.replace('{file}', file_path) for arg in cmd_args]
 
     try:
         result = subprocess.run(
-            [cmd] + resolved_args,
+            resolved_args,
             capture_output=True,
             text=True,
             timeout=30
@@ -185,7 +132,7 @@ def run_formatter(cmd: str, args: list, file_path: str) -> bool:
         return False
 
 
-def format_file(file_path: str) -> tuple[bool, str]:
+def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
     """
     Format a file based on its extension.
     Returns (success, message).
@@ -196,14 +143,17 @@ def format_file(file_path: str) -> tuple[bool, str]:
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
 
-    if ext not in FORMATTERS:
+    if ext not in formatter_map:
         return True, ""  # No formatter configured, skip silently
 
-    formatters = FORMATTERS[ext]
+    commands = formatter_map[ext]
 
-    for cmd, args in formatters:
+    for cmd_args in commands:
+        if not cmd_args:
+            continue
+
         # Special case: built-in markdown formatter
-        if cmd == '__markdown__':
+        if cmd_args[0] == '__markdown__':
             try:
                 with open(file_path, 'r', encoding='utf-8') as f:
                     content = f.read()
@@ -219,8 +169,8 @@ def format_file(file_path: str) -> tuple[bool, str]:
                 return False, f"Markdown format error: {e}"
 
         # Try external formatter
-        if run_formatter(cmd, args, file_path):
-            return True, f"Formatted with {cmd}: {file_path}"
+        if run_formatter(cmd_args, file_path):
+            return True, f"Formatted with {cmd_args[0]}: {file_path}"
 
     # No formatter available/succeeded
     return True, ""  # Not an error, just no formatter found
@@ -234,7 +184,11 @@ def main():
         if not file_path:
             sys.exit(0)
 
-        success, message = format_file(file_path)
+        # Load settings and build formatter map
+        settings = load_settings()
+        formatter_map = build_formatter_map(settings)
+
+        success, message = format_file(file_path, formatter_map)
 
         if message:
             print(message)

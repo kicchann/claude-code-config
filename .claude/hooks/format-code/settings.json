@@ -1,0 +1,61 @@
+{
+  "formatters": [
+    {
+      "extensions": [".py", ".pyi"],
+      "commands": [
+        ["ruff", "format", "{file}"],
+        ["black", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs"],
+      "commands": [
+        ["prettier", "--write", "{file}"],
+        ["eslint", "--fix", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".json", ".yaml", ".yml"],
+      "commands": [
+        ["prettier", "--write", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".sh", ".bash"],
+      "commands": [
+        ["shfmt", "-i", "2", "-w", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".go"],
+      "commands": [
+        ["gofmt", "-w", "{file}"],
+        ["goimports", "-w", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".rs"],
+      "commands": [
+        ["rustfmt", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".css", ".scss", ".less"],
+      "commands": [
+        ["prettier", "--write", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".html", ".htm"],
+      "commands": [
+        ["prettier", "--write", "{file}"]
+      ]
+    },
+    {
+      "extensions": [".md", ".mdx"],
+      "commands": [
+        ["__markdown__"]
+      ]
+    }
+  ]
+}

@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/format-code.py",
+            "command": "./.claude/hooks/format-code/format-code.py",
             "timeout": 30
           }
         ]
