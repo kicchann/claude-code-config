@@ -1,4 +1,5 @@
 """Tests for format-code hook."""
+
 import importlib.util
 import json
 import os
@@ -26,58 +27,58 @@ class TestDetectLanguage:
     """Tests for language detection."""
 
     def test_detect_json(self):
-        assert detect_language('{"key": "value"}') == 'json'
-        assert detect_language('[1, 2, 3]') == 'json'
+        assert detect_language('{"key": "value"}') == "json"
+        assert detect_language("[1, 2, 3]") == "json"
 
     def test_detect_python(self):
-        assert detect_language('def foo():\n    pass') == 'python'
-        assert detect_language('import os') == 'python'
-        assert detect_language('from pathlib import Path') == 'python'
+        assert detect_language("def foo():\n    pass") == "python"
+        assert detect_language("import os") == "python"
+        assert detect_language("from pathlib import Path") == "python"
 
     def test_detect_javascript(self):
-        assert detect_language('function foo() {}') == 'javascript'
-        assert detect_language('const x = 1') == 'javascript'
-        assert detect_language('() => {}') == 'javascript'
-        assert detect_language('console.log("hello")') == 'javascript'
+        assert detect_language("function foo() {}") == "javascript"
+        assert detect_language("const x = 1") == "javascript"
+        assert detect_language("() => {}") == "javascript"
+        assert detect_language('console.log("hello")') == "javascript"
 
     def test_detect_typescript(self):
-        assert detect_language('const x: string = "hello"') == 'typescript'
-        assert detect_language('interface Foo {}') == 'typescript'
+        assert detect_language('const x: string = "hello"') == "typescript"
+        assert detect_language("interface Foo {}") == "typescript"
 
     def test_detect_bash(self):
-        assert detect_language('#!/bin/bash\necho hello') == 'bash'
-        assert detect_language('if [ -f file ]; then\necho yes\nfi') == 'bash'
+        assert detect_language("#!/bin/bash\necho hello") == "bash"
+        assert detect_language("if [ -f file ]; then\necho yes\nfi") == "bash"
 
     def test_detect_sql(self):
-        assert detect_language('SELECT * FROM users') == 'sql'
-        assert detect_language('INSERT INTO table VALUES (1)') == 'sql'
+        assert detect_language("SELECT * FROM users") == "sql"
+        assert detect_language("INSERT INTO table VALUES (1)") == "sql"
 
     def test_detect_yaml(self):
-        assert detect_language('key: value') == 'yaml'
-        assert detect_language('name: "test"') == 'yaml'
+        assert detect_language("key: value") == "yaml"
+        assert detect_language('name: "test"') == "yaml"
 
     def test_detect_text_fallback(self):
-        assert detect_language('random text') == 'text'
-        assert detect_language('') == 'text'
+        assert detect_language("random text") == "text"
+        assert detect_language("") == "text"
 
 
 class TestFormatMarkdown:
     """Tests for markdown formatting."""
 
     def test_add_language_to_empty_fence(self):
-        content = '```\ndef foo():\n    pass\n```\n'
+        content = "```\ndef foo():\n    pass\n```\n"
         result = format_markdown(content)
-        assert '```python' in result
+        assert "```python" in result
 
     def test_preserve_existing_language(self):
-        content = '```javascript\nconst x = 1\n```\n'
+        content = "```javascript\nconst x = 1\n```\n"
         result = format_markdown(content)
-        assert '```javascript' in result
+        assert "```javascript" in result
 
     def test_reduce_excessive_blank_lines_outside_fence(self):
-        content = 'line1\n\n\n\nline2\n'
+        content = "line1\n\n\n\nline2\n"
         result = format_markdown(content)
-        assert result == 'line1\n\nline2\n'
+        assert result == "line1\n\nline2\n"
 
     def test_preserve_blank_lines_inside_fence(self):
         """Issue 1: Blank lines inside code fences should be preserved."""
@@ -109,21 +110,18 @@ def foo():
         result = format_markdown(content)
         # Outside fences: reduced to 2 newlines max
         # Check before fence
-        before_fence = result.split('```python')[0]
-        assert '\n\n\n' not in before_fence
+        before_fence = result.split("```python")[0]
+        assert "\n\n\n" not in before_fence
         # Check after fence
-        after_fence = result.split('```\n')[-1]
-        assert '\n\n\n' not in after_fence
+        after_fence = result.split("```\n")[-1]
+        assert "\n\n\n" not in after_fence
 
 
 class TestValidateFormatterEntry:
     """Tests for settings validation."""
 
     def test_valid_entry(self):
-        entry = {
-            "extensions": [".py"],
-            "commands": [["ruff", "format", "{file}"]]
-        }
+        entry = {"extensions": [".py"], "commands": [["ruff", "format", "{file}"]]}
         errors = validate_formatter_entry(entry, 0)
         assert errors == []
 
@@ -163,22 +161,20 @@ class TestBuildFormatterMap:
     def test_basic_mapping(self):
         settings = {
             "formatters": [
-                {
-                    "extensions": [".py"],
-                    "commands": [["ruff", "format", "{file}"]]
-                }
+                {"extensions": [".py"], "commands": [["ruff", "format", "{file}"]]}
             ]
         }
         result = build_formatter_map(settings)
         assert ".py" in result
-        assert result[".py"] == [["ruff", "format", "{file}"]]
+        assert result[".py"]["commands"] == [["ruff", "format", "{file}"]]
+        assert result[".py"]["install_hint"] == ""
 
     def test_multiple_extensions(self):
         settings = {
             "formatters": [
                 {
                     "extensions": [".js", ".ts"],
-                    "commands": [["prettier", "--write", "{file}"]]
+                    "commands": [["prettier", "--write", "{file}"]],
                 }
             ]
         }
@@ -189,25 +185,14 @@ class TestBuildFormatterMap:
     def test_disabled_formatter(self):
         settings = {
             "formatters": [
-                {
-                    "extensions": [".py"],
-                    "commands": [["ruff"]],
-                    "enabled": False
-                }
+                {"extensions": [".py"], "commands": [["ruff"]], "enabled": False}
             ]
         }
         result = build_formatter_map(settings)
         assert ".py" not in result
 
     def test_enabled_by_default(self):
-        settings = {
-            "formatters": [
-                {
-                    "extensions": [".py"],
-                    "commands": [["ruff"]]
-                }
-            ]
-        }
+        settings = {"formatters": [{"extensions": [".py"], "commands": [["ruff"]]}]}
         result = build_formatter_map(settings)
         assert ".py" in result
 
@@ -215,31 +200,20 @@ class TestBuildFormatterMap:
         """Issue 2: Duplicate extensions should merge commands."""
         settings = {
             "formatters": [
-                {
-                    "extensions": [".py"],
-                    "commands": [["ruff", "format", "{file}"]]
-                },
-                {
-                    "extensions": [".py"],
-                    "commands": [["black", "{file}"]]
-                }
+                {"extensions": [".py"], "commands": [["ruff", "format", "{file}"]]},
+                {"extensions": [".py"], "commands": [["black", "{file}"]]},
             ]
         }
         result = build_formatter_map(settings)
         assert ".py" in result
         # Both commands should be present
-        assert len(result[".py"]) == 2
-        assert ["ruff", "format", "{file}"] in result[".py"]
-        assert ["black", "{file}"] in result[".py"]
+        assert len(result[".py"]["commands"]) == 2
+        assert ["ruff", "format", "{file}"] in result[".py"]["commands"]
+        assert ["black", "{file}"] in result[".py"]["commands"]
 
     def test_case_insensitive_extension(self):
         settings = {
-            "formatters": [
-                {
-                    "extensions": [".PY", ".Py"],
-                    "commands": [["ruff"]]
-                }
-            ]
+            "formatters": [{"extensions": [".PY", ".Py"], "commands": [["ruff"]]}]
         }
         result = build_formatter_map(settings)
         assert ".py" in result
@@ -248,10 +222,7 @@ class TestBuildFormatterMap:
         settings = {
             "formatters": [
                 {"extensions": ".py"},  # Invalid: missing commands
-                {
-                    "extensions": [".js"],
-                    "commands": [["prettier"]]
-                }
+                {"extensions": [".js"], "commands": [["prettier"]]},
             ]
         }
         result = build_formatter_map(settings)
@@ -283,16 +254,18 @@ class TestFormatFile:
                 os.unlink(f.name)
 
     def test_markdown_formatter(self):
-        with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode='w') as f:
-            f.write('```\ndef foo():\n    pass\n```\n')
+        with tempfile.NamedTemporaryFile(suffix=".md", delete=False, mode="w") as f:
+            f.write("```\ndef foo():\n    pass\n```\n")
             f.flush()
             try:
-                formatter_map = {".md": [["__markdown__"]]}
+                formatter_map = {
+                    ".md": {"commands": [["__markdown__"]], "install_hint": ""}
+                }
                 success, message = format_file(f.name, formatter_map)
                 assert success
 
-                with open(f.name, 'r') as rf:
+                with open(f.name, "r") as rf:
                     content = rf.read()
-                assert '```python' in content
+                assert "```python" in content
             finally:
                 os.unlink(f.name)

@@ -2,9 +2,11 @@
 
 Write/Edit操作時に自動でファイルをフォーマットするPostToolUse hook。
 
+> **Quick Setup**: Claude Codeに「このREADME.mdを読んでセットアップして」と伝えるだけで設定できます。
+
 ## ファイル構成
 
-```
+```text
 .claude/hooks/format-code/
 ├── format-code.py         # メインスクリプト
 ├── settings.json.example  # フォーマッター設定テンプレート
@@ -78,6 +80,7 @@ cp .claude/hooks/format-code/settings.json.example .claude/hooks/format-code/set
         ["ruff", "format", "{file}"],
         ["black", "{file}"]
       ],
+      "install_hint": "pip install ruff  (or: pip install black)",
       "enabled": true
     }
   ]
@@ -86,8 +89,10 @@ cp .claude/hooks/format-code/settings.json.example .claude/hooks/format-code/set
 
 - `extensions`: 対象の拡張子（複数指定可）
 - `commands`: 実行するコマンド（`{file}`はファイルパスに置換）
+- `install_hint`: フォーマッター未インストール時に表示するインストール方法（オプション）
 - `enabled`: 有効/無効の切り替え（デフォルト: true）
 - 複数コマンドは順番に試行し、最初に成功したものを使用
+- 全コマンドが未インストールの場合、警告とインストール方法を表示
 
 ## テスト実行
 

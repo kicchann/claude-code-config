@@ -4,6 +4,7 @@ Multi-language formatter/linter for Claude Code PostToolUse hook.
 Runs appropriate linter/formatter based on file extension.
 Configuration is loaded from settings.json in the same directory.
 """
+
 import json
 import sys
 import re
@@ -22,7 +23,7 @@ def load_settings() -> dict:
     if not SETTINGS_FILE.exists():
         return {"formatters": []}
 
-    with open(SETTINGS_FILE, 'r', encoding='utf-8') as f:
+    with open(SETTINGS_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -58,8 +59,8 @@ def validate_formatter_entry(entry: dict, index: int) -> list[str]:
 
 def build_formatter_map(settings: dict) -> dict:
     """
-    Build a mapping from file extension to list of commands.
-    Returns: {'.py': [['ruff', 'format', '{file}'], ['black', '{file}']], ...}
+    Build a mapping from file extension to formatter config.
+    Returns: {'.py': {'commands': [...], 'install_hint': '...'}, ...}
     Only includes formatters where enabled is true (default: true).
     Merges commands if same extension appears multiple times.
     """
@@ -78,14 +79,21 @@ def build_formatter_map(settings: dict) -> dict:
 
         extensions = entry.get("extensions", [])
         commands = entry.get("commands", [])
+        install_hint = entry.get("install_hint", "")
 
         for ext in extensions:
             ext_lower = ext.lower()
             if ext_lower in formatter_map:
                 # Merge commands for duplicate extensions
-                formatter_map[ext_lower].extend(commands)
+                formatter_map[ext_lower]["commands"].extend(commands)
+                # Keep first non-empty install_hint
+                if not formatter_map[ext_lower]["install_hint"] and install_hint:
+                    formatter_map[ext_lower]["install_hint"] = install_hint
             else:
-                formatter_map[ext_lower] = list(commands)
+                formatter_map[ext_lower] = {
+                    "commands": list(commands),
+                    "install_hint": install_hint,
+                }
 
     return formatter_map
 
@@ -95,48 +103,52 @@ def detect_language(code: str) -> str:
     s = code.strip()
 
     # JSON detection
-    if re.search(r'^\s*[{\[]', s):
+    if re.search(r"^\s*[{\[]", s):
         try:
             json.loads(s)
-            return 'json'
+            return "json"
         except json.JSONDecodeError:
             pass
 
     # Python detection
-    if re.search(r'^\s*def\s+\w+\s*\(', s, re.M) or \
-       re.search(r'^\s*(import|from)\s+\w+', s, re.M):
-        return 'python'
+    if re.search(r"^\s*def\s+\w+\s*\(", s, re.M) or re.search(
+        r"^\s*(import|from)\s+\w+", s, re.M
+    ):
+        return "python"
 
     # JavaScript detection
-    if re.search(r'\b(function\s+\w+\s*\(|const\s+\w+\s*=)', s) or \
-       re.search(r'=>|console\.(log|error)', s):
-        return 'javascript'
+    if re.search(r"\b(function\s+\w+\s*\(|const\s+\w+\s*=)", s) or re.search(
+        r"=>|console\.(log|error)", s
+    ):
+        return "javascript"
 
     # TypeScript detection
-    if re.search(r':\s*(string|number|boolean|any)\b', s) or \
-       re.search(r'\binterface\s+\w+', s):
-        return 'typescript'
+    if re.search(r":\s*(string|number|boolean|any)\b", s) or re.search(
+        r"\binterface\s+\w+", s
+    ):
+        return "typescript"
 
     # Bash detection
-    if re.search(r'^#!.*\b(bash|sh)\b', s, re.M) or \
-       re.search(r'\b(if|then|fi|for|in|do|done)\b', s):
-        return 'bash'
+    if re.search(r"^#!.*\b(bash|sh)\b", s, re.M) or re.search(
+        r"\b(if|then|fi|for|in|do|done)\b", s
+    ):
+        return "bash"
 
     # SQL detection
-    if re.search(r'\b(SELECT|INSERT|UPDATE|DELETE|CREATE)\s+', s, re.I):
-        return 'sql'
+    if re.search(r"\b(SELECT|INSERT|UPDATE|DELETE|CREATE)\s+", s, re.I):
+        return "sql"
 
     # YAML detection
-    if re.search(r'^\s*[\w-]+:\s*[\w\-\.\"\'\[\{]', s, re.M):
-        return 'yaml'
+    if re.search(r"^\s*[\w-]+:\s*[\w\-\.\"\'\[\{]", s, re.M):
+        return "yaml"
 
-    return 'text'
+    return "text"
 
 
 def format_markdown(content: str) -> str:
     """Format markdown content with language detection."""
     # Pattern for matching code fences (with optional trailing whitespace for replacement)
-    fence_pattern = r'(?ms)^([ \t]{0,3})```([^\n]*)\n(.*?)(\n\1```)'
+    fence_pattern = r"(?ms)^([ \t]{0,3})```([^\n]*)\n(.*?)(\n\1```)"
 
     # Fix unlabeled code fences
     def add_lang_to_fence(match):
@@ -154,8 +166,8 @@ def format_markdown(content: str) -> str:
     last_end = 0
     for match in re.finditer(fence_pattern, content):
         # Process text before this fence
-        before_fence = content[last_end:match.start()]
-        before_fence = re.sub(r'\n{3,}', '\n\n', before_fence)
+        before_fence = content[last_end : match.start()]
+        before_fence = re.sub(r"\n{3,}", "\n\n", before_fence)
         parts.append(before_fence)
         # Keep fence as-is
         parts.append(match.group(0))
@@ -163,42 +175,39 @@ def format_markdown(content: str) -> str:
 
     # Process remaining text after last fence
     after_last = content[last_end:]
-    after_last = re.sub(r'\n{3,}', '\n\n', after_last)
+    after_last = re.sub(r"\n{3,}", "\n\n", after_last)
     parts.append(after_last)
 
-    content = ''.join(parts)
+    content = "".join(parts)
 
-    return content.rstrip() + '\n'
+    return content.rstrip() + "\n"
 
 
-def run_formatter(cmd_args: list, file_path: str) -> bool:
+def run_formatter(cmd_args: list, file_path: str) -> str:
     """
     Run a formatter command.
     cmd_args: ['ruff', 'format', '{file}'] or similar
-    Returns True if successful.
+    Returns: "success", "not_found", or "failed"
     """
     if not cmd_args:
-        return False
+        return "failed"
 
     cmd = cmd_args[0]
 
     # Check if command exists
     if not shutil.which(cmd):
-        return False
+        return "not_found"
 
     # Replace {file} placeholder with actual path
-    resolved_args = [arg.replace('{file}', file_path) for arg in cmd_args]
+    resolved_args = [arg.replace("{file}", file_path) for arg in cmd_args]
 
     try:
         result = subprocess.run(
-            resolved_args,
-            capture_output=True,
-            text=True,
-            timeout=30
+            resolved_args, capture_output=True, text=True, timeout=30
         )
-        return result.returncode == 0
+        return "success" if result.returncode == 0 else "failed"
     except (subprocess.TimeoutExpired, subprocess.SubprocessError):
-        return False
+        return "failed"
 
 
 def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
@@ -215,22 +224,25 @@ def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
     if ext not in formatter_map:
         return True, ""  # No formatter configured, skip silently
 
-    commands = formatter_map[ext]
+    config = formatter_map[ext]
+    commands = config["commands"]
+    install_hint = config.get("install_hint", "")
+    missing_cmds = []
 
     for cmd_args in commands:
         if not cmd_args:
             continue
 
         # Special case: built-in markdown formatter
-        if cmd_args[0] == '__markdown__':
+        if cmd_args[0] == "__markdown__":
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
 
                 formatted = format_markdown(content)
 
                 if formatted != content:
-                    with open(file_path, 'w', encoding='utf-8') as f:
+                    with open(file_path, "w", encoding="utf-8") as f:
                         f.write(formatted)
                     return True, f"Formatted markdown: {file_path}"
                 return True, ""
@@ -238,17 +250,27 @@ def format_file(file_path: str, formatter_map: dict) -> tuple[bool, str]:
                 return False, f"Markdown format error: {e}"
 
         # Try external formatter
-        if run_formatter(cmd_args, file_path):
+        status = run_formatter(cmd_args, file_path)
+        if status == "success":
             return True, f"Formatted with {cmd_args[0]}: {file_path}"
+        elif status == "not_found":
+            missing_cmds.append(cmd_args[0])
 
-    # No formatter available/succeeded
-    return True, ""  # Not an error, just no formatter found
+    # All formatters missing → warn user
+    if missing_cmds:
+        msg = f"Formatter not found for '{ext}': {', '.join(missing_cmds)}"
+        if install_hint:
+            msg += f"\n  Install: {install_hint}"
+        return False, msg
+
+    # Formatters exist but all failed
+    return True, ""
 
 
 def main():
     try:
         input_data = json.load(sys.stdin)
-        file_path = input_data.get('tool_input', {}).get('file_path', '')
+        file_path = input_data.get("tool_input", {}).get("file_path", "")
 
         if not file_path:
             sys.exit(0)
@@ -272,5 +294,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
