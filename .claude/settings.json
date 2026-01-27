@@ -22,6 +22,18 @@
           }
         ]
       }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/scripts/analyze-custom-commands.js",
+            "timeout": 30
+          }
+        ]
+      }
     ]
   },
   "enabledPlugins": {
