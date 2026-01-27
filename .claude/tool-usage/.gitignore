@@ -1,0 +1,5 @@
+# Custom Command Analytics - Personal Data
+# Personal statistics and session logs are excluded from Git
+
+personal/
+*.log

@@ -1,0 +1,8 @@
+{"type":"session_start","timestamp":"2026-01-27T10:00:00Z","session_id":"test-session-123"}
+{"type":"tool_use","tool_name":"Bash","tool_input":{"command":"node .claude/commands/git-push-pr.js","description":"Create PR and push"},"timestamp":"2026-01-27T10:05:00Z"}
+{"type":"tool_result","tool_name":"Bash","result":"PR created successfully","timestamp":"2026-01-27T10:05:15Z"}
+{"type":"tool_use","tool_name":"Bash","tool_input":{"command":"node .claude/commands/code-review.js","description":"Review code"},"timestamp":"2026-01-27T10:10:00Z"}
+{"type":"tool_result","tool_name":"Bash","result":"Review complete","timestamp":"2026-01-27T10:10:30Z"}
+{"type":"tool_use","tool_name":"Bash","tool_input":{"command":"node .claude/commands/git-push-pr.js","description":"Push again"},"timestamp":"2026-01-27T10:15:00Z"}
+{"type":"tool_result","tool_name":"Bash","error":"fatal: not a git repository","timestamp":"2026-01-27T10:15:05Z"}
+{"type":"session_end","timestamp":"2026-01-27T10:30:00Z"}

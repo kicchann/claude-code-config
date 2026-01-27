@@ -1,0 +1,20 @@
+{
+  "customCommands": {
+    "git-push-pr": {
+      "command": "node .claude/commands/git-push-pr.js",
+      "description": "Create PR and push"
+    },
+    "code-review": {
+      "command": "node .claude/commands/code-review.js",
+      "description": "Review code"
+    },
+    "run-tests": {
+      "command": "npm test",
+      "description": "Run test suite"
+    },
+    "legacy-deploy": {
+      "command": "deploy.sh",
+      "description": "Old deployment script"
+    }
+  }
+}
