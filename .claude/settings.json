@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/scripts/analyze-custom-commands.js",
+            "command": "node ./.claude/hooks/analytics/analyze-custom-commands.js",
             "timeout": 30
           }
         ]

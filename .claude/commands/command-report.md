@@ -19,7 +19,7 @@ model: haiku
 ## 実行
 
 ```bash
-node .claude/scripts/generate-command-report.js
+node ./.claude/hooks/analytics/generate-command-report.js
 ```
 
 ## 出力例
