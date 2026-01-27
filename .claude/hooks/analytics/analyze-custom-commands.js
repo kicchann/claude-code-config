@@ -426,33 +426,33 @@ function cleanOldSessions(filePath, retentionDays = 90) {
 function processTranscript(transcriptContent) {
   const projectDir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
   const customCommands = getCustomCommandDefinitions(projectDir);
-  debugLog('Found custom commands', { count: customCommands.length, commands: customCommands });
+  // debugLog('Found custom commands', { count: customCommands.length, commands: customCommands });
 
   if (customCommands.length === 0) {
-    debugLog('No custom commands found, exiting');
+    // debugLog('No custom commands found, exiting');
     return;
   }
 
   const entries = parseTranscript(transcriptContent);
-  debugLog('Parsed transcript entries', { count: entries.length });
+  // debugLog('Parsed transcript entries', { count: entries.length });
 
   if (entries.length === 0) {
-    debugLog('No valid entries found, exiting');
+    // debugLog('No valid entries found, exiting');
     return;
   }
 
   const sessionAnalysis = analyzeCommands(entries, customCommands);
-  debugLog('Analyzed commands', {
-    commandCount: sessionAnalysis.commands.size,
-    commands: Array.from(sessionAnalysis.commands.entries()).map(([name, data]) => ({
-      name,
-      count: data.count,
-      errors: data.errors.length
-    }))
-  });
+  // debugLog('Analyzed commands', {
+  //   commandCount: sessionAnalysis.commands.size,
+  //   commands: Array.from(sessionAnalysis.commands.entries()).map(([name, data]) => ({
+  //     name,
+  //     count: data.count,
+  //     errors: data.errors.length
+  //   }))
+  // });
 
   if (sessionAnalysis.commands.size === 0) {
-    debugLog('No commands detected in this session, exiting');
+    // debugLog('No commands detected in this session, exiting');
     return;
   }
 
@@ -461,13 +461,13 @@ function processTranscript(transcriptContent) {
   const userDir = path.join(projectDir, '.claude', 'tool-usage', 'personal', username);
   const statsPath = path.join(userDir, 'commands.json');
   const sessionsPath = path.join(userDir, 'sessions.jsonl');
-  debugLog('File paths', { username, statsPath, sessionsPath });
+  // debugLog('File paths', { username, statsPath, sessionsPath });
 
   // Update and save stats
   const updatedStats = mergeStats(loadStats(statsPath), sessionAnalysis);
   updatedStats.insights = generateInsights(updatedStats, customCommands);
   saveStats(statsPath, updatedStats);
-  debugLog('Saved stats');
+  // debugLog('Saved stats');
 
   // Append session record
   const sessionData = {
@@ -480,10 +480,10 @@ function processTranscript(transcriptContent) {
       .map(([name]) => name)
   };
   appendSession(sessionsPath, sessionData);
-  debugLog('Appended session', sessionData);
+  // debugLog('Appended session', sessionData);
 
   cleanOldSessions(sessionsPath, 90);
-  debugLog('Cleaned old sessions');
+  // debugLog('Cleaned old sessions');
 
   console.error(`[Analytics] Recorded ${sessionAnalysis.commands.size} command(s) for user ${username}`);
 }
@@ -512,35 +512,35 @@ function debugLog(message, data = null) {
  * SessionEnd hooks receive JSON metadata via stdin with transcript_path
  */
 function main() {
-  debugLog('SessionEnd hook started');
+  // debugLog('SessionEnd hook started');
   const chunks = [];
 
   process.stdin.on('data', chunk => {
     chunks.push(chunk);
-    debugLog('Received stdin chunk', { size: chunk.length });
+    // debugLog('Received stdin chunk', { size: chunk.length });
   });
 
   process.stdin.on('end', () => {
     try {
       // Parse hook input JSON from stdin
       const hookInput = chunks.join('');
-      debugLog('Processing hook input', { inputLength: hookInput.length });
+      // debugLog('Processing hook input', { inputLength: hookInput.length });
 
       const input = JSON.parse(hookInput);
-      debugLog('Parsed hook input', input);
+      // debugLog('Parsed hook input', input);
 
       // Read transcript from the provided path
       const transcriptPath = input.transcript_path;
       if (!transcriptPath) {
-        debugLog('ERROR: No transcript_path provided');
+        // debugLog('ERROR: No transcript_path provided');
         console.error('[Analytics] No transcript_path provided in hook input');
         process.exit(0);
         return;
       }
 
-      debugLog('Checking transcript file', { path: transcriptPath });
+      // debugLog('Checking transcript file', { path: transcriptPath });
       if (!fs.existsSync(transcriptPath)) {
-        debugLog('ERROR: Transcript file not found');
+        // debugLog('ERROR: Transcript file not found');
         console.error('[Analytics] Transcript file not found:', transcriptPath);
         process.exit(0);
         return;
@@ -548,18 +548,18 @@ function main() {
 
       // Read and process transcript file
       const transcriptContent = fs.readFileSync(transcriptPath, 'utf8');
-      debugLog('Read transcript file', {
-        size: transcriptContent.length,
-        lines: transcriptContent.split('\n').length
-      });
+      // debugLog('Read transcript file', {
+      //   size: transcriptContent.length,
+      //   lines: transcriptContent.split('\n').length
+      // });
 
       processTranscript(transcriptContent);
-      debugLog('Processing completed successfully');
+      // debugLog('Processing completed successfully');
     } catch (error) {
-      debugLog('ERROR in main', {
-        message: error.message,
-        stack: error.stack
-      });
+      // debugLog('ERROR in main', {
+      //   message: error.message,
+      //   stack: error.stack
+      // });
       console.error('[Analytics] Error processing transcript:', error.message);
     } finally {
       process.exit(0);
@@ -567,7 +567,7 @@ function main() {
   });
 
   process.stdin.on('error', error => {
-    debugLog('FATAL ERROR in stdin', { message: error.message });
+    // debugLog('FATAL ERROR in stdin', { message: error.message });
     console.error('[Analytics] Fatal error:', error.message);
     process.exit(0);
   });
