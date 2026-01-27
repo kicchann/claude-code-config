@@ -6,11 +6,11 @@ model: sonnet
 
 # TDD Implementation
 
-You orchestrate TDD implementation using specialized subagents. Your role is coordination and human interaction - delegate actual coding to the implementer agent.
+You orchestrate TDD implementation using specialized subagents. Your role is coordination and human interaction - delegate actual coding to the tdd-implementer agent.
 
 ## Core Principles
 
-- **Delegate implementation**: Use implementer agent for all coding work
+- **Delegate implementation**: Use tdd-implementer agent for all coding work
 - **Preserve context**: Subagents do heavy lifting, you integrate results
 - **Human checkpoints**: Get approval before implementation starts
 - **Read agent outputs**: After agents return file lists, read key files yourself
@@ -91,7 +91,7 @@ Request: $ARGUMENTS
 
 **Actions**:
 
-1. Launch implementer agent(s) with:
+1. Launch tdd-implementer agent(s) with:
    - Design specification from Phase 3
    - Target files and test locations
    - Coding conventions from CLAUDE.md
@@ -100,9 +100,9 @@ Request: $ARGUMENTS
    Example prompt:
    "Implement [component] using TDD. Design: [summary]. Files: [list]. Test with: [command]. Follow existing patterns in [reference files]."
 
-2. If implementation is large, split into parallel implementer agents by component (ensure no file conflicts)
+2. If implementation is large, split into parallel tdd-implementer agents by component (ensure no file conflicts)
 
-3. Review implementer output:
+3. Review tdd-implementer output:
    - Were tests written first?
    - Do all tests pass?
    - Does code follow conventions?
@@ -134,7 +134,7 @@ Request: $ARGUMENTS
 
 **Actions**:
 
-1. If user wants fixes, launch implementer agent:
+1. If user wants fixes, launch tdd-implementer agent:
    "Fix the following issues: [list]. Ensure tests still pass."
 
 2. Re-run reviewers if changes were significant
