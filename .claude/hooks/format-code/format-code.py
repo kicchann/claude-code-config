@@ -6,11 +6,11 @@ Configuration is loaded from settings.json in the same directory.
 """
 
 import json
-import sys
-import re
 import os
+import re
 import subprocess
 import shutil
+import sys
 from pathlib import Path
 
 # Get the directory where this script is located
@@ -198,15 +198,19 @@ def run_formatter(cmd_args: list, file_path: str) -> str:
     cmd = cmd_args[0]
 
     # Check if command exists
-    if not shutil.which(cmd):
+    cmd_path = shutil.which(cmd)
+    if not cmd_path:
         return "not_found"
 
     # Replace {file} placeholder with actual path
     resolved_args = [arg.replace("{file}", file_path) for arg in cmd_args]
 
+    # On Windows, use shell=True to support .CMD and .BAT files
+    use_shell = platform.system() == "Windows"
+
     try:
         result = subprocess.run(
-            resolved_args, capture_output=True, text=True, timeout=30
+            resolved_args, capture_output=True, text=True, timeout=30, shell=use_shell
         )
         return "success" if result.returncode == 0 else "failed"
     except (subprocess.TimeoutExpired, subprocess.SubprocessError):
