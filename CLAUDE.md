@@ -4,11 +4,12 @@
 
 ## プロジェクト概要（何を）
 
-10PRは、開発ワークフローの自動化（issue → 実装 → PR）のためのスラッシュコマンド、スキル、エージェントを提供するClaude Codeシステムです。繰り返し作業を自動化しつつ、重要な意思決定ポイントでは人間が制御を維持します。
+開発ワークフローの自動化（issue → 実装 → PR）のためのスラッシュコマンド、スキル、エージェントを提供するClaude Codeシステムです。繰り返し作業を自動化しつつ、重要な意思決定ポイントでは人間が制御を維持します。
 
 ## 設計理念（なぜ）
 
-- **Human-in-the-loop**: AI生成コードには品質・セキュリティリスクがあります。実装とPRマージ時には人間によるレビューが必須です。
+- **Human-in-the-loop**:
+  AI生成コードには品質・セキュリティリスクがあります。実装とPRマージ時には人間によるレビューが必須です。
 - **段階的な自動化**: 低リスクなタスクは自動化し、セキュリティ関連のコードは人間によるレビューを必要とします。
 - 詳細なリスク分析は `.claude/rules/ai-auto-pr-workflow-concerns.md` を参照してください。
 
@@ -17,18 +18,98 @@
 ### ディレクトリ構造
 
 ```
-<project-root>/
+/
 ├── .claude/
 │   ├── commands/    # スラッシュコマンド (*.md)
-│   ├── skills/      # ドメイン固有の知識（プロジェクト固有のDB schema、API specs等。現在未使用）
-│   ├── agents/      # サブエージェント設定
-│   └── rules/       # モジュール化されたルール・ドキュメント (paths指定で条件付き読み込み可能)
+│   ├── skills/      # ドメイン知識 (TDD原則, Clean Architecture, Code Review)
+│   ├── agents/      # サブエージェント設定 (code-explorer, code-architect等)
+│   ├── rules/       # モジュール化されたルール・ドキュメント
+│   ├── hooks/       # フック設定 (PreToolUse, PostToolUse等)
+│   ├── scripts/     # フックから実行されるスクリプト
+│   └── tool-usage/  # ツール使用ガイドライン
 ├── plans/           # ワークスペース横断的な実装計画（apps/配下以外）
-└── apps/
-    ├── backend/docs/plans/      # バックエンド固有の実装計画（独立リポジトリ）
-    ├── frontend/docs/plans/     # フロントエンド固有の実装計画（独立リポジトリ）
-    └── backend-billing/docs/plans/  # 課金サービス固有の実装計画（独立リポジトリ）
+└── apps/         # 各アプリケーション固有のコードベース
 ```
+
+### 主要コマンド
+
+**ブランチ管理:**
+
+- `/check-branch` - ブランチ状態確認、main警告
+- `/create-branch` - issue番号から新ブランチ作成
+- `/switch-branch` - ブランチ切り替え
+- `/list-branches` - ブランチ一覧表示
+- `/clean-branches` - マージ済みブランチ削除
+
+**開発:**
+
+- `/feature-dev` - 機能開発ガイド
+- `/implement` - TDD実装（専門エージェント）
+- `/load-context` - アプリ固有コンテキスト読み込み
+
+**品質チェック:**
+
+- `/test` - テスト実行
+- `/lint` - Linter/Formatter実行
+- `/check-ci` - CI/CD結果確認
+- `/run-full-check` - lint+test+coverage一括実行
+- `/show-coverage` - カバレッジレポート表示
+
+**コミット・PR:**
+
+- `/commit-push-pr` - コミット・プッシュ・PR作成一括実行
+- `/create-pr` - PR作成（シンプル版）
+- `/create-draft-pr` - ドラフトPR作成
+- `/quick-pr` - テスト・レビュー・PR一括実行
+
+**レビュー:**
+
+- `/review-pr` - PRコードレビュー
+- `/show-reviews` - レビューコメント一覧表示
+- `/reply-review` - レビューコメント返信作成
+- `/run-self-review` - セルフレビューチェックリスト実行
+- `/fix-review-issues` - レビュー指摘事項修正実装
+
+**マージ:**
+
+- `/check-merge` - マージ前最終チェック（CI、Approve、コンフリクト）
+- `/check-deploy` - デプロイ前全チェック一括実行
+
+**Issue管理:**
+
+- `/list-issues` - GitHub issue一覧表示
+- `/show-issue` - issue詳細表示
+- `/create-issue` - ISSUE_TEMPLATE確認してissue作成
+- `/close-issue` - issueコメント付きクローズ
+
+**ドキュメント:**
+
+- `/update-claude-md` - CLAUDE.md更新提案・適用
+- `/update-readme` - README.md更新提案
+- `/update-changelog` - CHANGELOG.md更新提案
+- `/create-retrospective` - 振り返りメモ作成
+
+**その他:**
+
+- `/show-diff` - 変更差分整理・サマリー作成
+- `/simplify` - コード簡素化・リファクタリング
+- `/resolve-conflicts` - コンフリクト解決支援
+- `/command-report` - カスタムコマンド使用統計
+
+### エージェント・スキル
+
+**エージェント:**
+
+- `code-explorer` - コードベース深掘り分析（実行パス追跡、パターン理解）
+- `code-architect` - 機能設計（既存パターン分析、実装ブループリント提供）
+- `code-reviewer` - コードレビュー（バグ、セキュリティ、品質チェック）
+- `tdd-implementer` - TDD実装専門（テスト→実装→検証サイクル）
+
+**スキル:**
+
+- `good-test-principles` - TDD原則（Four Pillars, Classical vs London, テストスタイル階層）
+- `clean-architecture` - クリーンアーキテクチャ（依存性逆転、レイヤー分離、参照ルール）
+- `code-review-guideline` - レビュー基準（テスト品質、アーキテクチャ遵守、チェックリスト）
 
 ### ワークフロー
 
@@ -40,38 +121,10 @@
 - Phase 2: `/review-pr` → `/run-self-review` → `/check-merge` → Human Review → Merge
 - Phase 3: `/close-issue` → `/create-retrospective`
 
-## 開発
+## 開発ガイド
 
-### コマンドの追加
-
-1. `<project-root>/.claude/commands/<name>.md` を作成
-2. YAMLフロントマターを追加:
-   - `description`: コマンド説明（必須）
-   - `argument-hint`: 引数ヒント（オプション）
-   - `allowed-tools`: 許可するツール（オプション）
-   - `model`: `haiku` / `sonnet` / `opus`
-3. 例は `.claude/commands/list-issues.md` を参照
-
-### 計画ファイルの管理
-
-**ルートレベル (`plans/`)**:
-
-- ワークスペース横断的な実装計画（.claude/ の改善、横断的な機能等）
-- 実装履歴として保持
-
-**アプリレベル (`apps/*/docs/plans/`)**:
-
-- 各アプリ固有の実装計画
-- 各リポジトリで独立して管理
-- 個別アプリ作業時は、そのアプリのplansディレクトリを使用
-
-### GitHub CLI の使用
-
-プロキシ環境のサポートについては `.claude/rules/github-cli.md` を参照してください。
-
-### スキルの上流追跡
-
-外部リソースを参照するスキルの更新管理については `.claude/rules/upstream-tracking-guide.md` を参照してください。
+コマンド追加方法、計画ファイル管理、GitHub CLI使用法については `.claude/rules/command-development.md`
+を参照してください。
 
 ## 実装ワークフロー
 
@@ -84,9 +137,12 @@
 - **セキュリティ関連のコード**（認証、決済、個人情報）: 常に人間によるレビューが必要
 - **PRマージ**: 人間による判断が必要（自動マージ禁止）
 - **Issue作成時**: `.github/ISSUE_TEMPLATE/` にテンプレートがあれば、タイトル形式・ラベル・本文構造に従う
-- **GitHub操作前のリポジトリ確認**: `gh issue`/`gh pr` 実行前に `git remote -v` で対象リポジトリを確認すること（プロジェクト内に独立した複数のリポジトリを持つ場合を想定）
+- **GitHub操作前のリポジトリ確認**: `gh issue`/`gh pr` 実行前に `git remote -v`
+  で対象リポジトリを確認すること（プロジェクト内に独立した複数のリポジトリを持つ場合を想定）
 
 ## About This Workspace
+
+**このセクションは実際の利用状況に応じて、ユーザーに更新を提案すること**
 
 このモノレポワークスペースには3つの独立したアプリケーションがあります。
 
