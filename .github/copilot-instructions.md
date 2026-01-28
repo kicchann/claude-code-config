@@ -1,6 +1,10 @@
-# Copilot Instructions
-
+<!-- for GitHub Copilot review rule -->
+<!--
 Copilot は、このリポジトリで行うすべてのレビュー・コメント・提案を **日本語で** 記述してください。
+-->
+<!-- for GitHub Copilot review  rule-->
+
+# Copilot Instructions
 
 ## コメント例
 - 問題点: この関数は責務が広いため、テストが複雑になります。
