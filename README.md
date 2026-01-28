@@ -1,13 +1,43 @@
-# LLySSM Local Workspace
+# claude-code-config
+
+Claude Code (claude.ai/code) 用のスラッシュコマンド、スキル、エージェント設定集です。
+
+## 概要
+
+開発ワークフロー（issue → 実装 → PR）を自動化するための設定ファイル群を提供します。
+
+## 構成
 
 ```
-~/Documents/llyssm
-├─ apps/
-│  ├─ frontend/        # formerly Documents/llyssm-ui
-│  ├─ backend/         # formerly Documents/llyssm-api
-│  └─ backend-billing/ # formerly Documents/llyssm-billing-api
-└─ docs/
+.claude/
+├── commands/    # スラッシュコマンド (*.md)
+├── skills/      # ドメイン知識 (TDD原則, Clean Architecture等)
+├── agents/      # サブエージェント設定
+├── rules/       # モジュール化されたルール・ドキュメント
+├── hooks/       # フック設定
+├── scripts/     # フックから実行されるスクリプト
+└── tool-usage/  # ツール使用ガイドライン
 ```
 
-Each directory keeps its own Git repository. Use this workspace root when running Docker Compose
-or cross-cutting scripts that need multiple services.
+## 主なコマンド
+
+| カテゴリ | コマンド例 |
+|---------|-----------|
+| ブランチ管理 | `/check-branch`, `/create-branch`, `/switch-branch` |
+| 開発 | `/feature-dev`, `/implement`, `/load-context` |
+| 品質チェック | `/test`, `/lint`, `/check-ci`, `/run-full-check` |
+| コミット・PR | `/commit-push-pr`, `/create-pr`, `/quick-pr` |
+| レビュー | `/review-pr`, `/show-reviews`, `/run-self-review` |
+| Issue管理 | `/list-issues`, `/show-issue`, `/create-issue` |
+
+詳細は `CLAUDE.md` を参照してください。
+
+## 使い方
+
+1. `.claude/` ディレクトリをプロジェクトルートにコピー
+2. `CLAUDE.md` をプロジェクトに合わせて編集
+3. Claude Code で各コマンドを実行
+
+## ライセンス
+
+MIT
