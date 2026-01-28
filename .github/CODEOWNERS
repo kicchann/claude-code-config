@@ -1,0 +1,5 @@
+# CODEOWNERS - すべての変更に対してオーナーにレビュー依頼
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# すべてのファイルに対してオーナーを設定
+* @kicchann
