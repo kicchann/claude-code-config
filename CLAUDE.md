@@ -68,7 +68,6 @@
 - `/review-local` - ローカル変更のコードレビュー
 - `/show-reviews` - レビューコメント一覧表示
 - `/reply-review` - レビューコメント返信作成
-- `/run-self-review` - セルフレビューチェックリスト実行
 - `/fix-review-issues` - レビュー指摘事項修正実装
 
 **マージ:**
