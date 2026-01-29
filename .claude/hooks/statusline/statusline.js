@@ -24,7 +24,7 @@ const getSessionSummary = (transcriptPath) => {
       for (const entry of Object.values(entries)) {
         if (entry.sessionId === sessionId && entry.summary) {
           const summary = entry.summary;
-          return summary.length > 15 ? summary.substring(0, 12) + "..." : summary;
+          return summary.length > 20 ? summary.substring(0, 17) + "..." : summary;
         }
       }
     }
@@ -63,7 +63,7 @@ const getSessionSummary = (transcriptPath) => {
             text = text.replace(/<[^>]+\/>/g, "").trim();
 
             if (text && text.length > 0) {
-              return text.length > 15 ? text.substring(0, 12) + "..." : text;
+              return text.length > 20 ? text.substring(0, 17) + "..." : text;
             }
           }
         } catch (e) {
@@ -150,8 +150,8 @@ const buildStatusLine = (input) => {
 
   const osEmoji = getPlatformEmoji();
   const summary = getSessionSummary(data.transcript_path);
-  const summaryPart = summary ? ` | 📝 ${summary}` : "";
-  return `${osEmoji} [${model}] 📁 ${currentDir}${summaryPart} | 🪙 ${tokenDisplay} | ${percentageColor}${percentage}%\x1b[0m`;
+  const summaryPart = summary ? ` 📝 ${summary}` : "";
+  return `${osEmoji} [${model}] 📁 ${currentDir}${summaryPart} 🪙 ${tokenDisplay} ${percentageColor}${percentage}%\x1b[0m`;
 };
 
 const chunks = [];
