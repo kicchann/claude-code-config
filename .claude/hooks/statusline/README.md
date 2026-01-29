@@ -243,8 +243,7 @@ ANSIエスケープコードを使用して色付きテキストを標準出力�
 ### 使用率計算
 
 ```javascript
-const autoCompactLimit = contextSize * 0.8;
-const percentage = Math.min(100, Math.round((currentTokens / autoCompactLimit) * 100));
+const percentage = Math.min(100, Math.round((currentTokens / contextSize) * 100));
 ```
 
-コンテキストウィンドウの80%を基準として使用率を計算します。
+コンテキストウィンドウの上限を基準として使用率を計算します。
