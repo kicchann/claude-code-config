@@ -108,74 +108,18 @@ gh pr view -R "$GH_REPO" <PR番号> --json body -q '.body' | grep -oE '(Closes|F
 
 ```yaml
 AskUserQuestion (multiSelect: false):
-  question: "次のアクションを選択してください"
+  question: "マージを実行しますか？"
   header: "アクション"
   options:
     - label: "マージを実行する"
       description: "チェック完了、マージオプションを選択"
-    - label: "レビューを依頼する"
-      description: "コントリビュータからレビュアーを選択"
     - label: "マージしない（後で確認）"
       description: "チェック結果のみ表示して終了"
 ```
 
 **「マージしない」選択時**: チェック結果のみ報告して終了。
 
-**「レビューを依頼する」選択時**: ステップ7.1へ進む。
-
 **「マージを実行する」選択時**: ステップ8へ進む。
-
-### 7.1 レビュアー選択
-
-プロジェクトのコラボレーターを取得し、レビュアー候補リストを作成:
-
-```bash
-# PR作成者を取得
-PR_AUTHOR=$(gh pr view -R "$GH_REPO" <PR番号> --json author -q '.author.login')
-
-# コラボレーター一覧を取得（PR作成者を除外）
-REVIEWERS=$(gh api "repos/$GH_REPO/collaborators" 2>/dev/null | jq -r '.[].login' | grep -v "$PR_AUTHOR")
-
-# フォールバック: コラボレーター取得失敗時はコミット履歴から取得
-if [ -z "$REVIEWERS" ]; then
-  REVIEWERS=$(git log --format='%aN' -100 | sort -u | grep -v "$PR_AUTHOR" | head -5)
-fi
-```
-
-**注意**: `contributors` や `assignees` APIは404エラーを返す場合があるため、`collaborators` APIを使用。失敗時はコミット履歴からフォールバック。
-
-```yaml
-AskUserQuestion (multiSelect: true):
-  question: "レビュアーを選択してください"
-  header: "レビュアー"
-  options:
-    # AIレビュアー（常に表示）
-    - label: "@copilot"
-      description: "GitHub Copilot レビュー"
-    - label: "@claude"
-      description: "Claude AI レビュー"
-    # コントリビュータ一覧から動的に生成
-    - label: "@contributor1"
-      description: "コントリビュータ"
-    - label: "@contributor2"
-      description: "コントリビュータ"
-    # ...
-```
-
-選択後、レビュアーをPRに追加:
-
-```bash
-# 人間のレビュアーを追加
-gh pr edit -R "$GH_REPO" <PR番号> --add-reviewer <human_reviewers>
-
-# AIレビュアーはコメントでメンション
-if "@claude" selected:
-  gh pr comment -R "$GH_REPO" <PR番号> --body "@claude please review this PR"
-if "@copilot" selected:
-  gh pr comment -R "$GH_REPO" <PR番号> --body "@copilot please review this PR"
-```
-
-レビュー依頼完了のメッセージを表示して終了。
 
 ### 8. マージオプション選択（multiSelect方式）
 

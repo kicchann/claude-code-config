@@ -1,6 +1,6 @@
 ---
 description: Code review a pull request
-allowed-tools: Bash(gh issue view:*), Bash(gh search:*), Bash(gh issue list:*), Bash(gh pr comment:*), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr list:*), mcp__github_inline_comment__create_inline_comment
+allowed-tools: Bash(gh issue view:*), Bash(gh search:*), Bash(gh issue list:*), Bash(gh pr comment:*), Bash(gh pr diff:*), Bash(gh pr view:*), Bash(gh pr list:*), Bash(gh pr edit:*), Bash(gh api:*), Bash(git:*), mcp__github_inline_comment__create_inline_comment, AskUserQuestion, Skill
 model: opus
 ---
 
@@ -116,9 +116,65 @@ AskUserQuestion:
   options:
     - label: "/check-merge を実行"
       description: "マージ前最終チェックを実行"
+    - label: "人間/AIレビューを依頼"
+      description: "追加のレビュアーを選択"
     - label: "終了"
       description: "レビューのみで終了"
   multiSelect: false
 ```
 
 If user selects "/check-merge を実行", invoke the Skill tool with `skill: "check-merge"`.
+
+If user selects "人間/AIレビューを依頼", proceed to Step 11.
+
+## 11. Reviewer Selection
+
+Get collaborators and build reviewer candidate list:
+
+```bash
+# Get PR author
+PR_AUTHOR=$(gh pr view -R "$GH_REPO" <PR番号> --json author -q '.author.login')
+
+# Get collaborators (exclude PR author)
+REVIEWERS=$(gh api "repos/$GH_REPO/collaborators" 2>/dev/null | jq -r '.[].login' | grep -v "$PR_AUTHOR")
+
+# Fallback: if collaborators API fails, get from commit history
+if [ -z "$REVIEWERS" ]; then
+  REVIEWERS=$(git log --format='%aN' -100 | sort -u | grep -v "$PR_AUTHOR" | head -5)
+fi
+```
+
+**Note**: Use `collaborators` API as `contributors` and `assignees` APIs may return 404. Falls back to git log on failure.
+
+```yaml
+AskUserQuestion (multiSelect: true):
+  question: "レビュアーを選択してください"
+  header: "レビュアー"
+  options:
+    # AI reviewers (always shown)
+    - label: "@copilot"
+      description: "GitHub Copilot レビュー"
+    - label: "@claude"
+      description: "Claude AI レビュー"
+    # Dynamically generated from collaborators
+    - label: "@contributor1"
+      description: "コントリビュータ"
+    - label: "@contributor2"
+      description: "コントリビュータ"
+    # ...
+```
+
+After selection, add reviewers to PR:
+
+```bash
+# Add human reviewers
+gh pr edit -R "$GH_REPO" <PR番号> --add-reviewer <human_reviewers>
+
+# AI reviewers are mentioned via comment
+if "@claude" selected:
+  gh pr comment -R "$GH_REPO" <PR番号> --body "@claude please review this PR"
+if "@copilot" selected:
+  gh pr comment -R "$GH_REPO" <PR番号> --body "@copilot please review this PR"
+```
+
+Display review request completion message and end.
