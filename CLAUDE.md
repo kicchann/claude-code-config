@@ -70,7 +70,7 @@
 - `/reply-review` - レビューコメント返信作成
 - `/fix-review-issues` - レビュー指摘事項修正実装
 
-**マージ:**
+**最終チェック:**
 
 - `/check-merge` - マージ前最終チェック（CI、Approve、コンフリクト）
 - `/check-deploy` - デプロイ前全チェック一括実行

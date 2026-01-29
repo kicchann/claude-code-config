@@ -28,7 +28,7 @@ Claude Code (claude.ai/code) 用のスラッシュコマンド、スキル、エ
 | 品質チェック | `/test`, `/lint`, `/check-ci`, `/run-full-check` |
 | コミット・PR | `/commit-push-pr`, `/create-pr`, `/quick-pr` |
 | レビュー | `/review-local`, `/review-pr`, `/show-reviews` |
-| マージ | `/check-merge`, `/check-deploy` |
+| 最終チェック | `/check-merge`, `/check-deploy` |
 | Issue管理 | `/list-issues`, `/show-issue`, `/create-issue` |
 
 詳細は `CLAUDE.md` を参照してください。
