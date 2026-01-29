@@ -3,6 +3,32 @@
 const path = require("path");
 
 /**
+ * Detect OS platform and return appropriate emoji
+ * @returns {string}
+ */
+const getPlatformEmoji = () => {
+  try {
+    const platform = process.platform;
+
+    if (platform === 'win32') {
+      return '🪟';
+    }
+
+    if (platform === 'darwin') {
+      return '🍎';
+    }
+
+    if (platform === 'linux') {
+      return '🐧';  // WSLもLinuxもペンギン
+    }
+
+    return '💻';  // フォールバック
+  } catch (err) {
+    return '💻';
+  }
+};
+
+/**
  * @param {number} tokens
  * @returns {string}
  */
@@ -47,7 +73,8 @@ const buildStatusLine = (input) => {
         ? "\x1b[33m" // Yellow
         : "\x1b[32m"; // Green
 
-  return `[${model}] 📁 ${currentDir} | 🪙 ${tokenDisplay} | ${percentageColor}${percentage}%\x1b[0m`;
+  const osEmoji = getPlatformEmoji();
+  return `${osEmoji} [${model}] 📁 ${currentDir} | 🪙 ${tokenDisplay} | ${percentageColor}${percentage}%\x1b[0m`;
 };
 
 const chunks = [];
