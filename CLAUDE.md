@@ -118,7 +118,7 @@
 **クイックリファレンス:**
 
 - Phase 1: `/check-branch` → `/feature-dev` → `/test` → `/lint` → `/update-claude-md` → `/commit-push-pr`
-- Phase 2: `/review-pr` → `/run-self-review` → `/check-merge` → Human Review → Merge
+- Phase 2: `/review-pr` → `/check-merge` → [Merge or Human Review]
 - Phase 3: `/close-issue` → `/create-retrospective`
 
 ## 開発ガイド

@@ -104,3 +104,21 @@ No issues found. Checked for bugs and CLAUDE.md compliance.
   - # sign after the file name
   - Line range format is L[start]-L[end]
   - Provide at least 1 line of context before and after, centered on the line you are commenting about (eg. if you are commenting about lines 5-6, you should link to `L4-7`)
+
+## 10. Next Step Prompt
+
+After completing the review, use AskUserQuestion to prompt for the next workflow step:
+
+```yaml
+AskUserQuestion:
+  question: "レビュー完了。次のステップに進みますか？"
+  header: "次のステップ"
+  options:
+    - label: "/check-merge を実行"
+      description: "マージ前最終チェックを実行"
+    - label: "終了"
+      description: "レビューのみで終了"
+  multiSelect: false
+```
+
+If user selects "/check-merge を実行", invoke the Skill tool with `skill: "check-merge"`.

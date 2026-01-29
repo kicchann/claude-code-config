@@ -9,7 +9,7 @@ paths: /never/match/folder/**
 ## Quick Reference
 
 - Phase 1: `/check-branch` → `/feature-dev` → `/test` → `/lint` → `/update-claude-md` → `/commit-push-pr`
-- Phase 2: `/review-pr` → `/run-self-review` → `/check-merge` → Human Review → Merge
+- Phase 2: `/review-pr` → `/check-merge` → [Merge or Human Review]
 - Phase 3: `/close-issue` → `/create-retrospective`
 
 ## Composite Commands (optional shortcuts)
@@ -30,10 +30,8 @@ paths: /never/match/folder/**
 
 ## Phase 2: Human-in-the-loop (post-PR checks)
 
-8. `/review-pr` - Run code review
-9. `/run-self-review` - Self-check (interactive confirmation)
-10. `/check-merge` - Pre-merge final check (CI, Approval, Conflicts)
-11. **Human Review** → Merge
+8. `/review-pr` - Run code review (prompts for `/check-merge`)
+9. `/check-merge` - Final check → Choose: Merge or Human Review
 
 ## Phase 3: Post-merge
 

@@ -67,7 +67,7 @@ git diff --stat origin/main...HEAD 2>/dev/null || git diff --stat origin/master.
 
 ### 4. 結果レポート
 
-```
+```text
 === マージ前チェック: PR #123 ===
 
 ## CI/CD
@@ -94,37 +94,147 @@ git diff --stat origin/main...HEAD 2>/dev/null || git diff --stat origin/master.
 - コンフリクト → リベース手順を案内
 - レビュー不足 → レビュー依頼を案内
 
-### 6. マージ実行（オプション）
+### 6. 関連issue検出
 
-マージ可能な状態（✅ マージ可能）の場合のみ、AskUserQuestionでユーザーに確認:
+PRの説明文から `Closes #N`, `Fixes #N`, `Resolves #N` パターンを検出し、関連issueを特定する。
 
-**質問1**: マージを実行するか
-- 選択肢: 「マージする」「マージしない」
-
-**質問2**（マージする場合）: ブランチを削除するか
-- 選択肢: 「削除する」「削除しない」
-
-**質問3**（削除する場合）: 本当に削除してよいか再確認
-- ブランチ名を明示して確認: 「⚠️ ブランチ '<branch-name>' を削除します。よろしいですか？」
-- 選択肢: 「はい、削除する」「いいえ、残す」
-
-ユーザーの選択に応じて実行:
 ```bash
-# マージ実行（ブランチ削除あり）
-gh pr merge -R "$GH_REPO" <PR番号> --merge --delete-branch
-
-# マージ実行（ブランチ削除なし）
-gh pr merge -R "$GH_REPO" <PR番号> --merge
-
-# masterブランチに切り替えて最新を取得
-git checkout master && git pull origin master
+gh pr view -R "$GH_REPO" <PR番号> --json body -q '.body' | grep -oE '(Closes|Fixes|Resolves) #[0-9]+' | grep -oE '#[0-9]+'
 ```
 
-マージ不可の場合は、この手順をスキップしてチェック結果のみ報告する。
+### 7. 次のアクション選択
+
+マージ可能な状態（✅ マージ可能）の場合のみ、AskUserQuestionで次のアクションを確認:
+
+```yaml
+AskUserQuestion (multiSelect: false):
+  question: "次のアクションを選択してください"
+  header: "アクション"
+  options:
+    - label: "マージを実行する"
+      description: "チェック完了、マージオプションを選択"
+    - label: "レビューを依頼する"
+      description: "コントリビュータからレビュアーを選択"
+    - label: "マージしない（後で確認）"
+      description: "チェック結果のみ表示して終了"
+```
+
+**「マージしない」選択時**: チェック結果のみ報告して終了。
+
+**「レビューを依頼する」選択時**: ステップ7.1へ進む。
+
+**「マージを実行する」選択時**: ステップ8へ進む。
+
+### 7.1 レビュアー選択
+
+プロジェクトのコラボレーターを取得し、レビュアー候補リストを作成:
+
+```bash
+# PR作成者を取得
+PR_AUTHOR=$(gh pr view -R "$GH_REPO" <PR番号> --json author -q '.author.login')
+
+# コラボレーター一覧を取得（PR作成者を除外）
+REVIEWERS=$(gh api "repos/$GH_REPO/collaborators" 2>/dev/null | jq -r '.[].login' | grep -v "$PR_AUTHOR")
+
+# フォールバック: コラボレーター取得失敗時はコミット履歴から取得
+if [ -z "$REVIEWERS" ]; then
+  REVIEWERS=$(git log --format='%aN' -100 | sort -u | grep -v "$PR_AUTHOR" | head -5)
+fi
+```
+
+**注意**: `contributors` や `assignees` APIは404エラーを返す場合があるため、`collaborators` APIを使用。失敗時はコミット履歴からフォールバック。
+
+```yaml
+AskUserQuestion (multiSelect: true):
+  question: "レビュアーを選択してください"
+  header: "レビュアー"
+  options:
+    # AIレビュアー（常に表示）
+    - label: "@copilot"
+      description: "GitHub Copilot レビュー"
+    - label: "@claude"
+      description: "Claude AI レビュー"
+    # コントリビュータ一覧から動的に生成
+    - label: "@contributor1"
+      description: "コントリビュータ"
+    - label: "@contributor2"
+      description: "コントリビュータ"
+    # ...
+```
+
+選択後、レビュアーをPRに追加:
+
+```bash
+# 人間のレビュアーを追加
+gh pr edit -R "$GH_REPO" <PR番号> --add-reviewer <human_reviewers>
+
+# AIレビュアーはコメントでメンション
+if "@claude" selected:
+  gh pr comment -R "$GH_REPO" <PR番号> --body "@claude please review this PR"
+if "@copilot" selected:
+  gh pr comment -R "$GH_REPO" <PR番号> --body "@copilot please review this PR"
+```
+
+レビュー依頼完了のメッセージを表示して終了。
+
+### 8. マージオプション選択（multiSelect方式）
+
+マージを実行する場合、AskUserQuestionで**1回の確認**で全オプションを選択:
+
+```yaml
+AskUserQuestion (multiSelect: true):
+  question: "マージオプションを選択してください"
+  header: "オプション"
+  options:
+    - label: "リモートブランチを削除する"
+      description: "マージ後にリモートブランチを削除"
+    - label: "ローカルブランチを削除する"
+      description: "マージ後にローカルブランチを削除"
+    - label: "関連issueをクローズする (#N)"
+      description: "関連issueを自動クローズ（検出時のみ表示）"
+```
+
+### 9. 選択に応じた実行
+
+ユーザーの選択に応じて順次実行:
+
+```bash
+# 1. マージ実行
+if "リモートブランチを削除する" 選択:
+  gh pr merge -R "$GH_REPO" <PR番号> --merge --delete-branch
+else:
+  gh pr merge -R "$GH_REPO" <PR番号> --merge
+
+# 2. mainブランチに切り替えて最新を取得
+git checkout main && git pull origin main
+
+# 3. ローカルブランチ削除（選択時）
+if "ローカルブランチを削除する" 選択:
+  git branch -d <branch-name>
+
+# 4. 関連issueクローズ（選択時）
+if "関連issueをクローズする" 選択:
+  # PRマージで自動クローズされない場合のフォールバック
+  gh issue close -R "$GH_REPO" <issue番号> --comment "Closed via PR #<PR番号>"
+```
+
+### 10. 結果サマリー
+
+実行した全アクションのサマリーを表示:
+
+```text
+✅ 完了サマリー
+- PR #41: マージ完了
+- リモートブランチ: 削除済み
+- ローカルブランチ: 削除済み
+- Issue #40: クローズ済み
+```
+
+マージ不可の場合は、ステップ6-10をスキップしてチェック結果のみ報告する。
 
 ## 使用例
 
-```
+```text
 /check-merge          # 現在のブランチのPR
 /check-merge 123      # PR #123
 ```
