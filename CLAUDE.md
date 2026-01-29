@@ -17,7 +17,7 @@
 
 ### ディレクトリ構造
 
-```
+```text
 /
 ├── .claude/
 │   ├── commands/    # スラッシュコマンド (*.md)
@@ -65,6 +65,7 @@
 **レビュー:**
 
 - `/review-pr` - PRコードレビュー
+- `/review-local` - ローカル変更のコードレビュー
 - `/show-reviews` - レビューコメント一覧表示
 - `/reply-review` - レビューコメント返信作成
 - `/run-self-review` - セルフレビューチェックリスト実行
