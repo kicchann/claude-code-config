@@ -8,7 +8,7 @@ Claude Code (claude.ai/code) 用のスラッシュコマンド、スキル、エ
 
 ## 構成
 
-```
+```text
 .claude/
 ├── commands/    # スラッシュコマンド (*.md)
 ├── skills/      # ドメイン知識 (TDD原則, Clean Architecture等)
@@ -27,7 +27,7 @@ Claude Code (claude.ai/code) 用のスラッシュコマンド、スキル、エ
 | 開発 | `/feature-dev`, `/implement`, `/load-context` |
 | 品質チェック | `/test`, `/lint`, `/check-ci`, `/run-full-check` |
 | コミット・PR | `/commit-push-pr`, `/create-pr`, `/quick-pr` |
-| レビュー | `/review-pr`, `/show-reviews`, `/run-self-review` |
+| レビュー | `/review-local`, `/review-pr`, `/show-reviews` |
 | Issue管理 | `/list-issues`, `/show-issue`, `/create-issue` |
 
 詳細は `CLAUDE.md` を参照してください。
