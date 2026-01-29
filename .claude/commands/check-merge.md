@@ -149,8 +149,8 @@ if "リモートブランチを削除する" 選択:
 else:
   gh pr merge -R "$GH_REPO" <PR番号> --merge
 
-# 2. mainブランチに切り替えて最新を取得
-git checkout main && git pull origin main
+# 2. デフォルトブランチに切り替えて最新を取得
+git checkout main 2>/dev/null && git pull origin main || git checkout master && git pull origin master
 
 # 3. ローカルブランチ削除（選択時）
 if "ローカルブランチを削除する" 選択:
