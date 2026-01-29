@@ -27,7 +27,7 @@ paths: /never/match/folder/**
 
 /quick-pr
  /test
- /code-review
+ /review-pr
  /commit-push-pr
 
 ### 人間レビュー
