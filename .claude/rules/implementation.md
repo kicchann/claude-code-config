@@ -10,7 +10,7 @@ paths: /never/match/folder/**
 
 - Phase 1: `/check-branch` → `/feature-dev` → `/test` → `/lint` → `/update-claude-md` → `/commit-push-pr`
 - Phase 2: `/review-pr` → `/run-self-review` → `/check-merge` → Human Review → Merge
-- Phase 3: `/close` → `/create-retrospective`
+- Phase 3: `/close-issue` → `/create-retrospective`
 
 ## Composite Commands (optional shortcuts)
 
