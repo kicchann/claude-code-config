@@ -38,9 +38,11 @@ gh issue view -R "$GH_REPO" <issue番号> --json title,state,labels
 コメントが指定されている場合はそれを使用。
 指定がない場合は以下のデフォルトコメントを使用:
 
+```text
+✅ 完了しました
 ```
-✅ Completed
-```
+
+**重要**: クローズコメントは日本語で記述してください。
 
 ### 3. コメント追加とクローズ
 
@@ -59,7 +61,7 @@ gh issue close -R "$GH_REPO" <issue番号>
 
 ## 使用例
 
-```
+```text
 /close-issue 123                    # デフォルトコメントでクローズ
 /close-issue 123 PR #456 でマージ済み  # カスタムコメントでクローズ
 ```

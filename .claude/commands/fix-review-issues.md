@@ -43,7 +43,7 @@ gh api repos/$GH_REPO/pulls/<PR番号>/comments
 
 指摘事項一覧を表示し、修正する項目を選択させる:
 
-```
+```yaml
 以下の指摘事項が見つかりました:
 
 [修正必須]
@@ -86,8 +86,10 @@ git push
 修正した項目について自動で返信:
 
 ```bash
-gh api repos/$GH_REPO/pulls/<PR番号>/comments/<comment_id>/replies -f body="修正しました。[コミットハッシュ]で対応済みです。"
+gh api repos/$GH_REPO/pulls/<PR番号>/comments/<comment_id>/replies -f body="ご指摘ありがとうございます。[コミットハッシュ]で修正しました。"
 ```
+
+**重要**: すべての返信コメントは日本語で記述してください。
 
 ### 7. 結果報告
 
@@ -108,6 +110,6 @@ gh api repos/$GH_REPO/pulls/<PR番号>/comments/<comment_id>/replies -f body="�
 
 ## 使用例
 
-```
+```text
 /fix-review-issues 123
 ```

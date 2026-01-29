@@ -47,6 +47,8 @@ git push -u origin $(git branch --show-current)
 gh pr create -R "$GH_REPO" --draft --fill
 ```
 
+**重要**: PR作成時、タイトルと本文は日本語で記述してください。`--fill` オプションは最新コミットメッセージとブランチ名から自動生成されますが、内容は日本語で記述すること。
+
 ### 4. 結果報告
 
 - 作成されたドラフトPRのURLを表示

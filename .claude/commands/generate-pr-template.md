@@ -47,30 +47,32 @@ gh issue view -R "$GH_REPO" <番号> --json title,body
 
 ### 3. テンプレート生成
 
+**重要**: 生成するPR説明文テンプレートはすべて日本語で記述してください。セクション見出しも日本語にしてください。
+
 以下の形式でPR説明文を生成:
 
 ```markdown
-## Summary
+## 概要
 
 [issueが指定された場合]
 Closes #N
 
 [変更内容の要約を2-3文で記述]
 
-## Changes
+## 変更内容
 
 [変更ファイルをカテゴリ別に整理]
 
-### Added
+### 追加
 - `path/to/new-file.md` - 新機能の説明
 
-### Modified
+### 変更
 - `path/to/existing.md` - 変更内容の説明
 
-### Deleted
+### 削除
 - `path/to/removed.md` - 削除理由
 
-## Test plan
+## テスト計画
 
 - [ ] [テスト項目1]
 - [ ] [テスト項目2]
@@ -85,7 +87,7 @@ Closes #N
 
 ## 使用例
 
-```
+```text
 /generate-pr-template #10
 ```
 

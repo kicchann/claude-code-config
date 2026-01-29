@@ -15,6 +15,11 @@ Claude Codeのステータスラインをカスタマイズし、モデル名、
 
 ## 機能
 
+- **プラットフォーム表示**: OS環境を絵文字で表示
+  - 🪟 Windows
+  - 🐧 Linux/WSL
+  - 🍎 macOS
+  - 💻 その他
 - **モデル表示**: 現在使用中のモデル名を表示（例: Sonnet 4.5）
 - **ディレクトリ表示**: 現在の作業ディレクトリ名を表示
 - **トークン使用量**: 現在のコンテキスト使用量を表示（K/M単位）
@@ -26,7 +31,7 @@ Claude Codeのステータスラインをカスタマイズし、モデル名、
 ## 表示例
 
 ```
-[Sonnet 4.5] 📁 my-project | 🪙 45.2K | 68%
+🪟 [Sonnet 4.5] 📁 my-project | 🪙 45.2K | 68%
 ```
 
 ## セットアップ
@@ -174,7 +179,8 @@ const percentageColor =
 ### 表示フォーマットを変更
 
 ```javascript
-return `[${model}] 📁 ${currentDir} | 🪙 ${tokenDisplay} | ${percentageColor}${percentage}%\x1b[0m`;
+const osEmoji = getPlatformEmoji();
+return `${osEmoji} [${model}] 📁 ${currentDir} | 🪙 ${tokenDisplay} | ${percentageColor}${percentage}%\x1b[0m`;
 ```
 
 ## トラブルシューティング
@@ -229,14 +235,15 @@ Statusline hookは標準入力からJSONデータを受け取ります:
 ANSIエスケープコードを使用して色付きテキストを標準出力に返します:
 
 ```
-[Model] 📁 directory | 🪙 tokens | color%
+🪟 [Model] 📁 directory | 🪙 tokens | color%
 ```
+
+先頭のOS絵文字は `process.platform` により自動検出されます。
 
 ### 使用率計算
 
 ```javascript
-const autoCompactLimit = contextSize * 0.8;
-const percentage = Math.min(100, Math.round((currentTokens / autoCompactLimit) * 100));
+const percentage = Math.min(100, Math.round((currentTokens / contextSize) * 100));
 ```
 
-コンテキストウィンドウの80%を基準として使用率を計算します。
+コンテキストウィンドウの上限を基準として使用率を計算します。

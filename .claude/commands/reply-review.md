@@ -48,6 +48,8 @@ gh api repos/$GH_REPO/pulls/<PR番号>/comments --jq '.[] | {id: .id, path: .pat
    - 説明する場合: 「[理由の説明]のため、現状のままとします。」
    - 質問する場合: 「[質問内容]について教えてください。」
 
+**重要**: 生成する返信内容は日本語で記述してください。
+
 ### 5. AskUserQuestionで返信内容確認
 
 生成した返信案をユーザーに確認:
@@ -73,6 +75,6 @@ gh api repos/$GH_REPO/pulls/<PR番号>/comments/<comment_id>/replies -f body="�
 
 ## 使用例
 
-```
+```text
 /reply-review 123
 ```

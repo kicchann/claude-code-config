@@ -4,6 +4,13 @@ allowed-tools: Bash(gh issue view:*), Bash(gh search:*), Bash(gh issue list:*), 
 model: opus
 ---
 
+**CRITICAL INSTRUCTION: すべてのレビューコメント・インラインコメント・サマリーは日本語で記述してください。**
+
+This applies to:
+- Inline comments posted via `mcp__github_inline_comment__create_inline_comment`
+- Summary comments posted via `gh pr comment`
+- All issue descriptions and suggested fixes
+
 Provide a code review for the given pull request.
 
 **Agent assumptions (applies to all agents and subagents):**
@@ -60,7 +67,7 @@ Note: Still review Claude generated PR's.
 7. If issues were found, skip to step 8 to post inline comments directly.
 
    If NO issues were found, post a summary comment using `gh pr comment` (if `--comment` argument is provided):
-   "No issues found. Checked for bugs and CLAUDE.md compliance."
+   "問題は見つかりませんでした。バグとCLAUDE.mdへの準拠をチェックしました。"
 
 8. Create a list of all comments that you plan on leaving. This is only for you to make sure you are comfortable with the comments. Do not post this list anywhere.
 
@@ -71,6 +78,8 @@ Note: Still review Claude generated PR's.
    - Never post a committable suggestion UNLESS committing the suggestion fixes the issue entirely. If follow up steps are required, do not leave a committable suggestion.
 
    **IMPORTANT: Only post ONE comment per unique issue. Do not post duplicate comments.**
+
+   **コメント言語**: すべてのコメントは日本語で記述してください。問題の説明、修正提案、コード例の説明文はすべて日本語にしてください。
 
 Use this list when evaluating issues in Steps 4 and 5 (these are false positives, do NOT flag):
 
@@ -91,9 +100,9 @@ Notes:
 
 ---
 
-## Code review
+## コードレビュー
 
-No issues found. Checked for bugs and CLAUDE.md compliance.
+問題は見つかりませんでした。バグとCLAUDE.mdへの準拠をチェックしました。
 
 ---
 

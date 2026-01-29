@@ -76,17 +76,19 @@ PRを作成する前にユーザーに確認:
 gh pr create -R "$GH_REPO" --title "タイトル" --body "説明"
 ```
 
+**重要**: PR作成時、タイトル・本文はすべて日本語で記述してください。
+
 **PR説明文テンプレート**:
 ```markdown
-## Summary
+## 概要
 Closes #N（issue番号が指定された場合）
 
 - 変更内容の要約
 
-## Changes
+## 変更内容
 - 変更ファイル一覧と概要
 
-## Test plan
+## テスト計画
 - テスト方法
 
 🤖 Generated with Claude Code

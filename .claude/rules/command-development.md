@@ -68,10 +68,6 @@ YAMLフロントマターの後に、Markdown形式でコマンドの詳細な�
   - 各リポジトリで独立して管理
   - 個別アプリ作業時は、そのアプリのplansディレクトリを使用
 
-#### GitHub CLI の使用
-
-プロキシ環境のサポートについては .claude/rules/github-cli.md を参照してください。
-
 #### スキルの上流追跡
 
 外部リソースを参照するスキルの更新管理については .claude/rules/upstream-tracking-guide.md を参照してください。

@@ -78,6 +78,8 @@ gh issue create -R "$GH_REPO" --title "タイトル" --body "本文" --label "�
 gh issue create -R "$GH_REPO" --title "タイトル" --body "本文"
 ```
 
+**重要**: issue作成時、タイトル・本文はすべて日本語で記述してください。テンプレートで指定されたセクション見出しも日本語で補完してください。
+
 ### 4. 結果報告
 
 - 作成したissueの番号とURL
@@ -86,7 +88,7 @@ gh issue create -R "$GH_REPO" --title "タイトル" --body "本文"
 
 ## 使用例
 
-```
+```text
 /create-issue "ログイン機能の実装"
 /create-issue "バグ修正: ボタンが押せない" "詳細な説明をここに記載"
 ```
