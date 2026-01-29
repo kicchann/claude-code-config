@@ -120,3 +120,31 @@ Use this list when evaluating issues in Steps 4 and 5 (these are false positives
 - Create a todo list before starting.
 - You must cite and link each CLAUDE.md violation to the specific rule being violated.
 - This command does NOT post anything to GitHub. All output is local terminal only.
+
+## 8. セルフレビューチェック
+
+AIレビュー完了後、以下のgrepベースチェックを実行:
+
+```bash
+# デバッグコードの検出
+git diff $(git merge-base main HEAD)...HEAD -U0 | grep -E '^\+.*(console\.log|print\(|debugger|TODO|FIXME)' || true
+
+# 認証情報らしき文字列の検出
+git diff $(git merge-base main HEAD)...HEAD -U0 | grep -iE '^\+.*(password|secret|api_key|token)\s*=' || true
+```
+
+検出された場合は警告として出力に追加:
+
+```markdown
+### ⚠️ セルフレビュー警告
+
+以下の項目を手動で確認してください:
+
+**デバッグコード検出:**
+- `path/to/file.js:10` - console.log('debug')
+
+**認証情報の可能性:**
+- `path/to/config.py:5` - api_key = "..."
+```
+
+何も検出されなければこのセクションは省略。
