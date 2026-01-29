@@ -94,87 +94,27 @@ git diff --stat origin/main...HEAD 2>/dev/null || git diff --stat origin/master.
 - コンフリクト → リベース手順を案内
 - レビュー不足 → レビュー依頼を案内
 
-### 6. 関連issue検出
+### 6. マージ案内（Human-in-the-loop）
 
-PRの説明文から `Closes #N`, `Fixes #N`, `Resolves #N` パターンを検出し、関連issueを特定する。
+**重要**: PRマージはセキュリティ上の理由から自動実行しません（Human-in-the-loop設計）。
 
-```bash
-gh pr view -R "$GH_REPO" <PR番号> --json body -q '.body' | grep -oE '(Closes|Fixes|Resolves) #[0-9]+' | grep -oE '#[0-9]+'
-```
-
-### 7. 次のアクション選択
-
-マージ可能な状態（✅ マージ可能）の場合のみ、AskUserQuestionで次のアクションを確認:
-
-```yaml
-AskUserQuestion (multiSelect: false):
-  question: "マージを実行しますか？"
-  header: "アクション"
-  options:
-    - label: "マージを実行する"
-      description: "チェック完了、マージオプションを選択"
-    - label: "マージしない（後で確認）"
-      description: "チェック結果のみ表示して終了"
-```
-
-**「マージしない」選択時**: チェック結果のみ報告して終了。
-
-**「マージを実行する」選択時**: ステップ8へ進む。
-
-### 8. マージオプション選択（multiSelect方式）
-
-マージを実行する場合、AskUserQuestionで**1回の確認**で全オプションを選択:
-
-```yaml
-AskUserQuestion (multiSelect: true):
-  question: "マージオプションを選択してください"
-  header: "オプション"
-  options:
-    - label: "リモートブランチを削除する"
-      description: "マージ後にリモートブランチを削除"
-    - label: "ローカルブランチを削除する"
-      description: "マージ後にローカルブランチを削除"
-    - label: "関連issueをクローズする (#N)"
-      description: "関連issueを自動クローズ（検出時のみ表示）"
-```
-
-### 9. 選択に応じた実行
-
-ユーザーの選択に応じて順次実行:
-
-```bash
-# 1. マージ実行
-if "リモートブランチを削除する" 選択:
-  gh pr merge -R "$GH_REPO" <PR番号> --merge --delete-branch
-else:
-  gh pr merge -R "$GH_REPO" <PR番号> --merge
-
-# 2. デフォルトブランチに切り替えて最新を取得
-git checkout main 2>/dev/null && git pull origin main || git checkout master && git pull origin master
-
-# 3. ローカルブランチ削除（選択時）
-if "ローカルブランチを削除する" 選択:
-  git branch -d <branch-name>
-
-# 4. 関連issueクローズ（選択時）
-if "関連issueをクローズする" 選択:
-  # PRマージで自動クローズされない場合のフォールバック
-  gh issue close -R "$GH_REPO" <issue番号> --comment "Closed via PR #<PR番号>"
-```
-
-### 10. 結果サマリー
-
-実行した全アクションのサマリーを表示:
+マージ可能な状態（✅ マージ可能）の場合、以下を提示:
 
 ```text
-✅ 完了サマリー
-- PR #41: マージ完了
-- リモートブランチ: 削除済み
-- ローカルブランチ: 削除済み
-- Issue #40: クローズ済み
+## マージ方法
+
+**GitHub UI:**
+https://github.com/<owner>/<repo>/pull/<PR番号>
+
+**コマンドライン:**
+gh pr merge -R <owner>/<repo> <PR番号> --merge --delete-branch
+
+**マージ後のローカル操作:**
+git checkout main && git pull origin main
+git branch -d <branch-name>
 ```
 
-マージ不可の場合は、ステップ6-10をスキップしてチェック結果のみ報告する。
+マージ不可の場合は、チェック結果と推奨アクションのみ報告する。
 
 ## 使用例
 
