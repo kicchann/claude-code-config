@@ -1,12 +1,18 @@
 ---
-description: PR作成（シンプル版）
-allowed-tools: Bash(git:*), Bash(gh:*), Read
-model: haiku
+description: PR作成
+argument-hint: [issue番号 例: #10]
+allowed-tools: Bash(git:*), Bash(gh:*), Read, AskUserQuestion
+model: sonnet
 ---
 
-# PR作成（シンプル版）
+# PR作成
 
 現在のブランチからPRを作成します。コミット・プッシュは事前に完了している前提。
+
+## 引数
+
+- `$ARGUMENTS`: issue番号（例: `#10`）（オプション）
+  - 指定時: PR説明文に `Closes #N` を含め、作成後にWIPラベルを削除
 
 ## 実行手順
 
@@ -52,19 +58,10 @@ ls "$REPO_ROOT/.github/pull_request_template.md" 2>/dev/null || \
 echo "No template found"
 ```
 
-### 4. PR作成
-
-**テンプレートが存在する場合:**
-
-```bash
-gh pr create -R "$GH_REPO" --fill
-```
-
-**テンプレートが存在しない場合:**
-
-`/generate-pr-template` と同様のロジックでPR説明文を生成:
+### 4. PR説明文の準備
 
 1. 変更内容を収集:
+
 ```bash
 # コミット一覧
 git log origin/main..HEAD --oneline 2>/dev/null || git log origin/master..HEAD --oneline
@@ -74,20 +71,30 @@ git diff origin/main..HEAD --name-status 2>/dev/null || git diff origin/master..
 ```
 
 2. PR説明文を生成:
+
+**テンプレートが存在する場合:** テンプレートに沿って内容を埋める
+
+**テンプレートが存在しない場合:**
+
 ```markdown
 ## Summary
+
+Closes #N（issue番号が指定された場合）
 
 - [変更内容の要約を2-3文で記述]
 
 ## Changes
 
 ### Added
+
 - [新規ファイル]
 
 ### Modified
+
 - [変更ファイル]
 
 ### Deleted
+
 - [削除ファイル]
 
 ## Test plan
@@ -95,14 +102,39 @@ git diff origin/main..HEAD --name-status 2>/dev/null || git diff origin/master..
 - [ ] [テスト項目]
 
 ---
+
 🤖 Generated with Claude Code
 ```
 
-3. PRを作成:
+### 5. PR内容確認（AskUserQuestion）
+
+PRを作成する前にユーザーに確認:
+
+- PRタイトル（デフォルト: 最新コミットメッセージ）
+- PR説明文の内容
+- ドラフトPRにするかどうか
+
+### 6. PR作成
+
 ```bash
-gh pr create -R "$GH_REPO" --title "$(git log -1 --pretty=format:%s)" --body "$GENERATED_BODY"
+# 通常PR
+gh pr create -R "$GH_REPO" --title "タイトル" --body "説明文"
+
+# ドラフトPR
+gh pr create -R "$GH_REPO" --title "タイトル" --body "説明文" --draft
 ```
 
-### 5. 結果報告
+### 7. WIPラベル削除（issue指定時）
 
-作成されたPRのURLを表示。
+issue番号（`#N`形式）が指定されていた場合、WIPラベルを削除:
+
+```bash
+gh issue edit -R "$GH_REPO" N --remove-label "WIP" 2>/dev/null || true
+```
+
+※ラベルが存在しない場合はエラーを無視
+
+### 8. 結果報告
+
+- 作成されたPRのURLを表示
+- 次のステップ（レビュー依頼など）を案内
