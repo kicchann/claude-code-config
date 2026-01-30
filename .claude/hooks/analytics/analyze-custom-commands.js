@@ -92,11 +92,12 @@ function extractCommandName(toolInput) {
   if (slashMatch) return slashMatch[1];
 
   // Pattern 2: Script in .claude/commands/ (node .claude/commands/foo.js)
-  const commandsMatch = cmd.match(/\.claude\/commands\/([^/\s]+)\.(js|sh|py|md)/);
+  // Support both / and \ as path separators for cross-platform compatibility
+  const commandsMatch = cmd.match(/\.claude[/\\]commands[/\\]([^/\\\s]+)\.(js|sh|py|md)/);
   if (commandsMatch) return commandsMatch[1];
 
   // Pattern 3: Script in .claude/scripts/custom-*.js
-  const customMatch = cmd.match(/\.claude\/scripts\/custom-([^/\s]+)\.js/);
+  const customMatch = cmd.match(/\.claude[/\\]scripts[/\\]custom-([^/\\\s]+)\.js/);
   if (customMatch) return `custom-${customMatch[1]}`;
 
   return null;

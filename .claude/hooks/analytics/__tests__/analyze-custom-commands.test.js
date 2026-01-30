@@ -127,6 +127,30 @@ suite.test('extractCommandName: handles missing command field', () => {
   assert.strictEqual(result, null, 'Should return null');
 });
 
+suite.test('extractCommandName: extracts from Windows-style script path', () => {
+  const mod = loadModule();
+  const toolInput = { command: 'node .claude\\commands\\check-ci.js' };
+  const result = mod.extractCommandName(toolInput);
+
+  assert.strictEqual(result, 'check-ci', 'Should extract from Windows path');
+});
+
+suite.test('extractCommandName: extracts from Windows-style custom script', () => {
+  const mod = loadModule();
+  const toolInput = { command: 'node .claude\\scripts\\custom-report.js' };
+  const result = mod.extractCommandName(toolInput);
+
+  assert.strictEqual(result, 'custom-report', 'Should extract from Windows custom script');
+});
+
+suite.test('extractCommandName: handles mixed path separators', () => {
+  const mod = loadModule();
+  const toolInput = { command: 'node .claude/commands\\check-ci.js' };
+  const result = mod.extractCommandName(toolInput);
+
+  assert.strictEqual(result, 'check-ci', 'Should handle mixed separators');
+});
+
 // Test: getCustomCommandDefinitions
 suite.test('getCustomCommandDefinitions: loads commands from directory', () => {
   const mod = loadModule();
