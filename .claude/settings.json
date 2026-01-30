@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/gh-setup.sh"
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./.claude/hooks/gh-setup.sh"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/format-code/format-code.py",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./.claude/hooks/format-code/format-code.py",
             "timeout": 30
           }
         ]
@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "./.claude/hooks/sounds/complete-sound.sh",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./.claude/hooks/sounds/complete-sound.sh",
             "timeout": 5
           }
         ]
@@ -41,7 +41,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node ./.claude/hooks/analytics/analyze-custom-commands.js",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && node ./.claude/hooks/analytics/analyze-custom-commands.js",
             "timeout": 30
           }
         ]
