@@ -63,46 +63,13 @@ git log --oneline -5
 git push -u origin $(git branch --show-current)
 ```
 
-### 5. PR作成確認（AskUserQuestion）
+### 5. PR作成
 
-PRを作成する前にユーザーに確認:
-- PRタイトル（デフォルト: 最新コミットメッセージ）
-- PR説明文の確認
-- ドラフトPRにするか
+`/create-pr` の手順に従ってPRを作成:
+- issue番号が指定されている場合は `/create-pr #N` として実行
+- PR作成確認、WIPラベル削除は `/create-pr` 側で処理される
 
-### 6. PR作成
-
-```bash
-gh pr create -R "$GH_REPO" --title "タイトル" --body "説明"
-```
-
-**PR説明文テンプレート**:
-```markdown
-## Summary
-Closes #N（issue番号が指定された場合）
-
-- 変更内容の要約
-
-## Changes
-- 変更ファイル一覧と概要
-
-## Test plan
-- テスト方法
-
-🤖 Generated with Claude Code
-```
-
-### 7. WIPラベル削除（issue指定時）
-
-issue番号（`#N`形式）が指定されていた場合、WIPラベルを削除:
-
-```bash
-gh issue edit -R "$GH_REPO" N --remove-label "WIP" 2>/dev/null || true
-```
-
-※ラベルが存在しない場合はエラーを無視
-
-### 8. 結果報告
+### 6. 結果報告
 
 - PR URLを表示
 - 次のステップ（レビュー依頼など）を案内
