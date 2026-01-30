@@ -116,6 +116,27 @@ const formatTokenCount = (tokens) =>
       : tokens.toString();
 
 /**
+ * モデル名に基づいて色コードを返す
+ * @param {string} modelName
+ * @returns {string} ANSIカラーコード
+ */
+const getModelColor = (modelName) => {
+  const name = modelName.toLowerCase();
+
+  if (name.includes('opus')) {
+    return '\x1b[93m';  // ゴールド（明るい黄色）- 賢い
+  }
+  if (name.includes('sonnet')) {
+    return '\x1b[92m';  // 優しい緑（明るい緑）- 親切
+  }
+  if (name.includes('haiku')) {
+    return '\x1b[34m';  // 青 - 速い
+  }
+
+  return '\x1b[37m';  // デフォルト：白
+};
+
+/**
  * @param {string} input
  * @returns {string}
  */
@@ -151,7 +172,8 @@ const buildStatusLine = (input) => {
   const osEmoji = getPlatformEmoji();
   const summary = getSessionSummary(data.transcript_path);
   const summaryPart = summary ? ` 📝 ${summary}` : "";
-  return `${osEmoji} [${model}] 📁 ${currentDir}${summaryPart} 🪙 ${tokenDisplay} ${percentageColor}${percentage}%\x1b[0m`;
+  const modelColor = getModelColor(model);
+  return `${osEmoji} ${modelColor}[${model}]\x1b[0m 📁 ${currentDir}${summaryPart} 🪙 ${tokenDisplay} ${percentageColor}${percentage}%\x1b[0m`;
 };
 
 const chunks = [];
