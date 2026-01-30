@@ -1,6 +1,6 @@
 ---
 description: 品質チェック一括実行（lint、test、coverage）
-allowed-tools: Bash(git:*), Bash(pytest:*), Bash(ruff:*), Bash(coverage:*)
+allowed-tools: Bash(git:*), Bash(pytest:*), Bash(ruff:*), Bash(coverage:*), Bash(npm:*), Bash(pnpm:*), Bash(go:*), Bash(cargo:*)
 model: sonnet
 ---
 
@@ -18,12 +18,25 @@ Lint、テスト、カバレッジを一括で実行し、コード品質をチ�
 
 ### 1. Lint チェック
 
-```bash
-# ruff check（自動修正なし、チェックのみ）
-ruff check .
+プロジェクトの言語を自動検出し、適切なlinterを実行します（`/lint` コマンドと同様）。
 
-# ruff format check
+```bash
+# Python の場合
+ruff check .
 ruff format --check .
+
+# JavaScript/TypeScript の場合
+npm run lint
+# または
+pnpm lint
+
+# Go の場合
+go vet ./...
+golangci-lint run
+
+# Rust の場合
+cargo clippy
+cargo fmt --check
 ```
 
 結果:
@@ -94,7 +107,7 @@ coverage report --show-missing
 ## 使用例
 
 ```
-/run-full-check
+/lint-test-check-coverage
 ```
 
 → lint、test、coverageを一括実行

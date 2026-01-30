@@ -1,6 +1,6 @@
 ---
 description: 一時退避
-argument-hint: [save|pop|list|drop] [message]
+argument-hint: "[save|pop|list|drop] [message]"
 allowed-tools: Bash(git:*)
 model: haiku
 ---

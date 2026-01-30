@@ -1,6 +1,6 @@
 ---
 description: アプリ固有のコンテキストを読み込む
-argument-hint: <app-name: frontend|backend|backend-billing>
+argument-hint: "<app-name: frontend|backend|backend-billing>"
 allowed-tools: Read, Glob, LS
 model: haiku
 ---

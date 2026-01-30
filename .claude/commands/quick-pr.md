@@ -16,7 +16,7 @@ model: opus
 ## 実行フロー
 
 ```
-/test → /lint → /self → /commit-push-pr
+/test → /lint → /review-local → /commit-push-pr
 ```
 
 ## 実行手順

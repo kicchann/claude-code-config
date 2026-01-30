@@ -52,7 +52,7 @@
 - `/test` - テスト実行
 - `/lint` - Linter/Formatter実行
 - `/check-ci` - CI/CD結果確認
-- `/run-full-check` - lint+test+coverage一括実行
+- `/lint-test-check-coverage` - lint+test+coverage一括実行
 - `/show-coverage` - カバレッジレポート表示
 
 **コミット・PR:**

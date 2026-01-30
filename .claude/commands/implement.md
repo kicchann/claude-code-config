@@ -81,6 +81,8 @@ Request: $ARGUMENTS
 
 5. **Get explicit user approval before proceeding**
 
+**Plan Template**: 設計の出力形式として `.claude/rules/plan-template.md` を使用してください。
+
 ---
 
 ## Phase 4: TDD Implementation
