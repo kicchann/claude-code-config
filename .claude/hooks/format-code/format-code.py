@@ -7,6 +7,7 @@ Configuration is loaded from settings.json in the same directory.
 
 import json
 import os
+import platform
 import re
 import subprocess
 import shutil
