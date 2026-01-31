@@ -7,15 +7,12 @@
 # Installs recommended CLI tools for AI-assisted coding:
 #
 # [Fast alternatives]
-#   - rg (ripgrep): grep alternative, 10x faster  (github.com/BurntSushi/ripgrep)
 #   - fd: find alternative                        (github.com/sharkdp/fd)
 #   - sd: sed alternative, intuitive syntax       (github.com/chmln/sd)
 #   - fcp: cp alternative, parallel processing   (github.com/Svetlitski/fcp)
 #   - choose: cut/awk alternative                 (github.com/theryangeary/choose)
-#   - uv/uvx: pip/venv alternative               (github.com/astral-sh/uv)
 #
 # [Structured extraction]
-#   - jq: JSON processor                          (github.com/jqlang/jq)
 #   - mdq: Markdown query                         (github.com/yshavit/mdq)
 #   - ogrep: Indent-aware grep (YAML/Python)     (github.com/kriomant/ogrep-rs)
 #   - rga: ripgrep for PDFs, Office, archives    (github.com/phiresky/ripgrep-all)
@@ -107,83 +104,7 @@ download_with_retry() {
 }
 
 # ============================================
-# 1. uv (Python package manager)
-# ============================================
-install_uv() {
-    if command -v uv &>/dev/null; then
-        log "uv already installed: $(uv --version)"
-        return 0
-    fi
-
-    log "Installing uv..."
-
-    # uv provides an official installer script
-    if curl $CURL_OPTS https://astral.sh/uv/install.sh | sh; then
-        # The installer adds to ~/.local/bin by default
-        if [ -x "$HOME/.local/bin/uv" ]; then
-            log "uv installed successfully: $($HOME/.local/bin/uv --version)"
-        fi
-    else
-        log "Failed to install uv"
-    fi
-}
-
-# ============================================
-# 2. jq (JSON processor)
-# ============================================
-install_jq() {
-    if command -v jq &>/dev/null; then
-        log "jq already installed: $(jq --version)"
-        return 0
-    fi
-
-    log "Installing jq..."
-
-    JQ_VERSION="1.7.1"
-    case "$ARCH_SUFFIX" in
-        x86_64)
-            JQ_URL="https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-amd64"
-            ;;
-        aarch64)
-            JQ_URL="https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-arm64"
-            ;;
-    esac
-
-    if download_with_retry "$JQ_URL" "$LOCAL_BIN/jq" "jq"; then
-        chmod +x "$LOCAL_BIN/jq"
-        log "jq installed successfully: $($LOCAL_BIN/jq --version)"
-    else
-        log "Failed to install jq"
-    fi
-}
-
-# ============================================
-# 3. ripgrep (rg) - Fast text search
-# ============================================
-install_ripgrep() {
-    if command -v rg &>/dev/null; then
-        log "ripgrep already installed: $(rg --version | head -1)"
-        return 0
-    fi
-
-    log "Installing ripgrep..."
-
-    RG_VERSION="14.1.1"
-    RG_TARBALL="ripgrep-${RG_VERSION}-${ARCH_SUFFIX}-unknown-linux-musl.tar.gz"
-    RG_URL="https://github.com/BurntSushi/ripgrep/releases/download/${RG_VERSION}/${RG_TARBALL}"
-
-    if download_with_retry "$RG_URL" "$TEMP_DIR/$RG_TARBALL" "ripgrep"; then
-        tar -xzf "$TEMP_DIR/$RG_TARBALL" -C "$TEMP_DIR"
-        mv "$TEMP_DIR/ripgrep-${RG_VERSION}-${ARCH_SUFFIX}-unknown-linux-musl/rg" "$LOCAL_BIN/rg"
-        chmod +x "$LOCAL_BIN/rg"
-        log "ripgrep installed successfully: $($LOCAL_BIN/rg --version | head -1)"
-    else
-        log "Failed to install ripgrep"
-    fi
-}
-
-# ============================================
-# 4. fd - Fast file finder
+# 1. fd - Fast file finder
 # ============================================
 install_fd() {
     if command -v fd &>/dev/null; then
@@ -208,7 +129,7 @@ install_fd() {
 }
 
 # ============================================
-# 5. sd - Fast sed alternative
+# 2. sd - Fast sed alternative
 # ============================================
 install_sd() {
     if command -v sd &>/dev/null; then
@@ -233,7 +154,7 @@ install_sd() {
 }
 
 # ============================================
-# 6. mdq - Markdown query tool
+# 3. mdq - Markdown query tool
 # ============================================
 install_mdq() {
     if command -v mdq &>/dev/null; then
@@ -267,7 +188,7 @@ install_mdq() {
 }
 
 # ============================================
-# 7. fcp - Fast file copy
+# 4. fcp - Fast file copy
 # ============================================
 install_fcp() {
     if command -v fcp &>/dev/null; then
@@ -301,7 +222,7 @@ install_fcp() {
 }
 
 # ============================================
-# 8. choose - Fast field selection (cut alternative)
+# 5. choose - Fast field selection (cut alternative)
 # ============================================
 install_choose() {
     if command -v choose &>/dev/null; then
@@ -331,7 +252,7 @@ install_choose() {
 }
 
 # ============================================
-# 9. ripgrep-all (rga) - ripgrep for PDFs, archives, etc.
+# 6. ripgrep-all (rga) - ripgrep for PDFs, archives, etc.
 # ============================================
 install_rga() {
     if command -v rga &>/dev/null; then
@@ -370,7 +291,7 @@ install_rga() {
 }
 
 # ============================================
-# 10. ogrep - Outline grep for indentation-structured text
+# 7. ogrep - Outline grep for indentation-structured text
 # ============================================
 install_ogrep() {
     if command -v ogrep &>/dev/null; then
@@ -408,9 +329,6 @@ install_ogrep() {
 # ============================================
 log "Starting CLI tools installation..."
 
-install_uv
-install_jq
-install_ripgrep
 install_fd
 install_sd
 install_mdq
