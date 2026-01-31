@@ -16,9 +16,10 @@
 #
 # [Structured extraction]
 #   - jq: JSON processor                          (github.com/jqlang/jq)
+#   - yq: YAML/TOML/XML processor (jq-like)      (github.com/mikefarah/yq)
 #   - htmlq: HTML query with CSS selectors       (github.com/mgdm/htmlq)
 #   - mdq: Markdown query                         (github.com/yshavit/mdq)
-#   - ogrep: Indent-aware grep (YAML/Python)     (github.com/kriomant/ogrep-rs)
+#   - csvq: CSV query with SQL                   (github.com/mithrandie/csvq)
 #   - rga: ripgrep for PDFs, Office, archives    (github.com/phiresky/ripgrep-all)
 #
 # Features:
@@ -405,36 +406,67 @@ install_rga() {
 }
 
 # ============================================
-# 10. ogrep - Outline grep for indentation-structured text
+# 10. yq - YAML/TOML/XML processor (jq-like syntax)
 # ============================================
-install_ogrep() {
-    if command -v ogrep &>/dev/null; then
-        log "ogrep already installed: $(ogrep --version 2>&1 | head -1)"
+install_yq() {
+    # Check if mikefarah/yq is installed (not kislyuk/yq)
+    if [ -x "$LOCAL_BIN/yq" ]; then
+        log "yq already installed: $($LOCAL_BIN/yq --version 2>&1 | head -1)"
         return 0
     fi
 
-    log "Installing ogrep..."
+    log "Installing yq (mikefarah/yq)..."
 
-    OGREP_VERSION="0.6.0"
-    # ogrep-rs only provides x86_64 Linux binaries currently
+    YQ_VERSION="4.44.3"
     case "$ARCH_SUFFIX" in
         x86_64)
-            OGREP_TARBALL="ogrep-rs_${OGREP_VERSION}_x86_64-unknown-linux-musl.tar.gz"
+            YQ_FILE="yq_linux_amd64"
             ;;
         aarch64)
-            log "ogrep: aarch64 not supported, skipping"
-            return 0
+            YQ_FILE="yq_linux_arm64"
             ;;
     esac
-    OGREP_URL="https://github.com/kriomant/ogrep-rs/releases/download/${OGREP_VERSION}/${OGREP_TARBALL}"
+    YQ_URL="https://github.com/mikefarah/yq/releases/download/v${YQ_VERSION}/${YQ_FILE}"
 
-    if download_with_retry "$OGREP_URL" "$TEMP_DIR/$OGREP_TARBALL" "ogrep"; then
-        tar -xzf "$TEMP_DIR/$OGREP_TARBALL" -C "$TEMP_DIR"
-        mv "$TEMP_DIR/ogrep" "$LOCAL_BIN/ogrep"
-        chmod +x "$LOCAL_BIN/ogrep"
-        log "ogrep installed successfully: $($LOCAL_BIN/ogrep --version 2>&1 | head -1)"
+    if download_with_retry "$YQ_URL" "$LOCAL_BIN/yq" "yq"; then
+        chmod +x "$LOCAL_BIN/yq"
+        log "yq installed successfully: $($LOCAL_BIN/yq --version 2>&1 | head -1)"
     else
-        log "Failed to install ogrep"
+        log "Failed to install yq"
+    fi
+}
+
+# ============================================
+# 11. csvq - CSV query with SQL syntax
+# ============================================
+install_csvq() {
+    if command -v csvq &>/dev/null; then
+        log "csvq already installed: $(csvq --version 2>&1 | head -1)"
+        return 0
+    fi
+
+    log "Installing csvq..."
+
+    CSVQ_VERSION="1.18.1"
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            CSVQ_TARBALL="csvq-v${CSVQ_VERSION}-linux-amd64.tar.gz"
+            CSVQ_DIR="csvq-v${CSVQ_VERSION}-linux-amd64"
+            ;;
+        aarch64)
+            CSVQ_TARBALL="csvq-v${CSVQ_VERSION}-linux-arm64.tar.gz"
+            CSVQ_DIR="csvq-v${CSVQ_VERSION}-linux-arm64"
+            ;;
+    esac
+    CSVQ_URL="https://github.com/mithrandie/csvq/releases/download/v${CSVQ_VERSION}/${CSVQ_TARBALL}"
+
+    if download_with_retry "$CSVQ_URL" "$TEMP_DIR/$CSVQ_TARBALL" "csvq"; then
+        tar -xzf "$TEMP_DIR/$CSVQ_TARBALL" -C "$TEMP_DIR"
+        mv "$TEMP_DIR/$CSVQ_DIR/csvq" "$LOCAL_BIN/csvq"
+        chmod +x "$LOCAL_BIN/csvq"
+        log "csvq installed successfully: $($LOCAL_BIN/csvq --version 2>&1 | head -1)"
+    else
+        log "Failed to install csvq"
     fi
 }
 
@@ -445,6 +477,7 @@ log "Starting CLI tools installation..."
 
 install_uv
 install_jq
+install_yq
 install_htmlq
 install_ripgrep
 install_fd
@@ -453,7 +486,7 @@ install_mdq
 install_fcp
 install_choose
 install_rga
-install_ogrep
+install_csvq
 
 log "CLI tools setup complete"
 exit 0
