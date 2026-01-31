@@ -1,0 +1,57 @@
+# CLI Tools Setup Hook
+
+リモートClaude Code環境でAIコーディングに役立つCLIツールを自動インストールするSessionStartフックです。
+
+## インストールされるツール
+
+| ツール | 用途 | リポジトリ |
+|--------|------|-----------|
+| **uv/uvx** | Python パッケージ管理（npm感覚でPython環境を構築） | [astral-sh/uv](https://github.com/astral-sh/uv) |
+| **jq** | JSON解析・加工（APIレスポンスの処理に必須） | [jqlang/jq](https://github.com/jqlang/jq) |
+| **rg (ripgrep)** | 高速テキスト検索（grepの10倍以上高速） | [BurntSushi/ripgrep](https://github.com/BurntSushi/ripgrep) |
+| **fd** | 高速ファイル検索（findの代替） | [sharkdp/fd](https://github.com/sharkdp/fd) |
+| **sd** | 高速テキスト置換（sedの代替、直感的な構文） | [chmln/sd](https://github.com/chmln/sd) |
+
+## 特徴
+
+- **冪等性**: 既にインストール済みのツールはスキップ
+- **fail-safe**: インストール失敗しても他のツールの処理を継続
+- **リトライ**: ダウンロード失敗時は最大3回リトライ（指数バックオフ）
+- **マルチアーキテクチャ**: x86_64/aarch64(arm64) 対応
+
+## 設定
+
+`settings.json` のSessionStartフックに登録済み:
+
+```json
+{
+  "type": "command",
+  "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./.claude/hooks/cli-tools-setup.sh",
+  "timeout": 300
+}
+```
+
+## 使用例
+
+インストール後、Claude Codeで以下のように活用できます:
+
+```bash
+# jq: JSONの整形・抽出
+curl -s https://api.example.com/data | jq '.items[] | {id, name}'
+
+# rg: 高速コード検索
+rg "TODO|FIXME" --type py
+
+# fd: ファイル検索
+fd "\.test\.ts$"
+
+# sd: テキスト置換
+sd 'oldFunction' 'newFunction' src/**/*.ts
+
+# uv: Pythonパッケージ管理
+uvx ruff check .
+```
+
+## 参考
+
+- [バイブコーディングするならこれ入れとけ！なCLI](https://dev.sin5d.com/バイブコーディングするならこれ入れとけ！なcli/)
