@@ -11,6 +11,7 @@
 | **rg (ripgrep)** | 高速テキスト検索（grepの10倍以上高速） | [BurntSushi/ripgrep](https://github.com/BurntSushi/ripgrep) |
 | **fd** | 高速ファイル検索（findの代替） | [sharkdp/fd](https://github.com/sharkdp/fd) |
 | **sd** | 高速テキスト置換（sedの代替、直感的な構文） | [chmln/sd](https://github.com/chmln/sd) |
+| **mdq** | Markdownクエリ（見出し・リスト・コードブロック抽出） | [yshavit/mdq](https://github.com/yshavit/mdq) |
 
 ## 特徴
 
@@ -50,6 +51,10 @@ sd 'oldFunction' 'newFunction' src/**/*.ts
 
 # uv: Pythonパッケージ管理
 uvx ruff check .
+
+# mdq: Markdownからデータ抽出
+mdq '# *' README.md              # 全見出しを抽出
+mdq '```bash' README.md          # bashコードブロックを抽出
 ```
 
 ## 参考

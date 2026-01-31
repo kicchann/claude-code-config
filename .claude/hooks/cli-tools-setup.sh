@@ -6,6 +6,7 @@
 #   - rg (ripgrep): Fast text search
 #   - fd: Fast file finder
 #   - sd: Fast sed alternative
+#   - mdq: Markdown query tool
 #
 # Following best practices: idempotent, fail-safe, proper logging
 
@@ -213,6 +214,40 @@ install_sd() {
 }
 
 # ============================================
+# 6. mdq - Markdown query tool
+# ============================================
+install_mdq() {
+    if command -v mdq &>/dev/null; then
+        log "mdq already installed: $(mdq --version)"
+        return 0
+    fi
+
+    log "Installing mdq..."
+
+    MDQ_VERSION="0.9.0"
+    # mdq only provides x64 Linux binaries currently
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            MDQ_TARBALL="mdq-linux-x64-musl.tar.gz"
+            ;;
+        aarch64)
+            log "mdq: aarch64 not supported, skipping"
+            return 0
+            ;;
+    esac
+    MDQ_URL="https://github.com/yshavit/mdq/releases/download/v${MDQ_VERSION}/${MDQ_TARBALL}"
+
+    if download_with_retry "$MDQ_URL" "$TEMP_DIR/$MDQ_TARBALL" "mdq"; then
+        tar -xzf "$TEMP_DIR/$MDQ_TARBALL" -C "$TEMP_DIR"
+        mv "$TEMP_DIR/mdq" "$LOCAL_BIN/mdq"
+        chmod +x "$LOCAL_BIN/mdq"
+        log "mdq installed successfully: $($LOCAL_BIN/mdq --version)"
+    else
+        log "Failed to install mdq"
+    fi
+}
+
+# ============================================
 # Run installations
 # ============================================
 log "Starting CLI tools installation..."
@@ -222,6 +257,7 @@ install_jq
 install_ripgrep
 install_fd
 install_sd
+install_mdq
 
 log "CLI tools setup complete"
 exit 0
