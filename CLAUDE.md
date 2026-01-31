@@ -1,17 +1,17 @@
 # CLAUDE.md
 
-このファイルは、Claude Code (claude.ai/code) がこのリポジトリで作業する際のガイダンスを提供します。
+このファイルは、Claude Code (claude.ai/code) がこのリポジトリで作業する際のガイダンスを提供します
 
 ## プロジェクト概要（何を）
 
-開発ワークフローの自動化（issue → 実装 → PR）のためのスラッシュコマンド、スキル、エージェントを提供するClaude Codeシステムです。繰り返し作業を自動化しつつ、重要な意思決定ポイントでは人間が制御を維持します。
+開発ワークフローの自動化（issue → 実装 → PR）のためのスラッシュコマンド、スキル、エージェントを提供するClaude Codeシステムです。繰り返し作業を自動化しつつ、重要な意思決定ポイントでは人間が制御を維持します
 
 ## 設計理念（なぜ）
 
 - **Human-in-the-loop**:
-  AI生成コードには品質・セキュリティリスクがあります。実装とPRマージ時には人間によるレビューが必須です。
-- **段階的な自動化**: 低リスクなタスクは自動化し、セキュリティ関連のコードは人間によるレビューを必要とします。
-- 詳細なリスク分析は `.claude/rules/ai-auto-pr-workflow-concerns.md` を参照してください。
+  AI生成コードには品質・セキュリティリスクがあります。実装とPRマージ時には人間によるレビューが必須
+- **段階的な自動化**: 低リスクなタスクは自動化し、セキュリティ関連のコードは人間によるレビューが必要
+- 詳細なリスク分析は `.claude/rules/ai-auto-pr-workflow-concerns.md` を参照
 
 ## アーキテクチャ（どのように）
 
@@ -113,7 +113,7 @@
 
 ### ワークフロー
 
-ワークフローフェーズと複合コマンドについては `.claude/rules/implementation.md` を参照してください。
+ワークフローフェーズと複合コマンドについては `.claude/rules/implementation.md` を参照。
 
 **クイックリファレンス:**
 
@@ -123,12 +123,11 @@
 
 ## 開発ガイド
 
-コマンド追加方法、計画ファイル管理、GitHub CLI使用法については `.claude/rules/command-development.md`
-を参照してください。
+コマンド追加方法、計画ファイル管理、GitHub CLI使用法については `.claude/rules/command-development.md` を参照
 
 ## 実装ワークフロー
 
-詳細なワークフロー手順は `.claude/rules/implementation.md` を参照してください。
+詳細は `.claude/rules/implementation.md` を参照
 
 **すべてのケースで必須:** `/update-claude-md` と `/commit-push-pr`
 
@@ -138,14 +137,14 @@
 - **PRマージ**: 人間による判断が必要（自動マージ禁止）
 - **Issue作成時**: `.github/ISSUE_TEMPLATE/` にテンプレートがあれば、タイトル形式・ラベル・本文構造に従う
 - **GitHub操作前のリポジトリ確認**: `gh issue`/`gh pr` 実行前に `git remote -v`
-  で対象リポジトリを確認すること（プロジェクト内に独立した複数のリポジトリを持つ場合を想定）
-- **CLIツール使用時**: rules/structured-cli-tools-usage.mdに従うこと
+  で対象リポジトリを確認する（プロジェクト内に独立した複数のリポジトリを持つ場合を想定）
+- **CLIツール使用時**: `rules/structured-cli-tools-usage.md` に従う
   
 ## About This Workspace
 
 **このセクションは実際の利用状況に応じて、ユーザーに更新を提案すること**
 
-このモノレポワークスペースには3つの独立したアプリケーションがあります。
+このモノレポワークスペースには3つの独立したアプリケーションがあります
 
 ### Important
 
