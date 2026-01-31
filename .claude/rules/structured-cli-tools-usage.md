@@ -21,10 +21,12 @@
 
 | データ形式 | ツール | 例 |
 |-----------|--------|-----|
-| JSON | `jq` | `curl api \| jq '.items[].name'` |
+| JSON | `jq` | `jq '.items[].name' data.json` |
+| YAML/TOML/XML | `yq` | `yq '.spec.containers[].image' deploy.yaml` |
+| HTML | `htmlq` | `htmlq 'a' --attribute href < page.html` |
 | Markdown | `mdq` | `mdq '# 見出し' < README.md` |
-| YAML/インデント | `ogrep` | `ogrep "key" config.yaml` |
-| CSV/TSV | `choose` | `cat data.csv \| choose 0 2` |
+| CSV (SQL) | `csvq` | `csvq "SELECT name FROM data.csv WHERE age > 20"` |
+| CSV (フィールド) | `choose` | `choose 0 2 < data.csv` |
 | PDF/Office | `rga` | `rga "keyword" docs/` |
 
 ## パイプ処理パターン
@@ -54,6 +56,19 @@ fd -e md .claude/commands/ | jq -R -s '
 '
 ```
 
+### HTML抽出
+
+```bash
+# リンクのhref属性を抽出
+curl -s https://example.com | htmlq 'a' --attribute href
+
+# 特定クラスのテキスト抽出
+htmlq '.content p' --text < page.html
+
+# テーブルデータ抽出
+htmlq 'table tr td' --text < data.html
+```
+
 ### Markdown抽出
 
 ```bash
@@ -64,6 +79,36 @@ mdq '# API' < README.md
 mdq '```bash' < README.md
 ```
 
+### YAML/TOML/XML抽出 (yq)
+
+```bash
+# YAML値の抽出
+yq '.database.host' config.yaml
+
+# 配列からの抽出
+yq '.spec.containers[].image' deployment.yaml
+
+# TOML処理
+yq -p toml '.dependencies' Cargo.toml
+
+# XML処理
+yq -p xml '.project.dependencies.dependency[].artifactId' pom.xml
+
+# 形式変換（YAML→JSON）
+yq -o json '.' config.yaml
+```
+
+### CSV SQL処理 (csvq)
+
+```bash
+# 基本クエリ
+csvq "SELECT name, age FROM users.csv WHERE age > 20"
+
+# 集計
+csvq "SELECT department, COUNT(*) FROM employees.csv GROUP BY department"
+
+# 複数ファイル結合
+csvq "SELECT * FROM users.csv u JOIN orders.csv o ON u.id = o.user_id"
 ### インデント構造を保持した検索
 
 ```bash
@@ -87,7 +132,14 @@ jq '{
 
 | パターン | 用途 |
 |---------|------|
-| `fd \| jq -R -s` | ファイルリスト → JSON配列 |
+| `jq '.path'` | JSON値抽出 |
+| `yq '.path'` | YAML/TOML/XML値抽出 |
+| `yq -o json` | YAML→JSON変換 |
+| `htmlq 'selector'` | HTML要素抽出 |
+| `csvq "SELECT..."` | CSV SQL集計 |
+| `choose 0 2` | CSVフィールド選択 |
+| `rg --json \| jq` | 検索結果構造化 |
+| `fd \| jq -R -s` | ファイルリスト→JSON |
 | `rg --json \| jq` | 検索結果 → 構造化データ |
 | `mdq \| jq -R -s` | Markdown → JSON |
 | `fd \| xargs sd` | 複数ファイル一括置換 |
