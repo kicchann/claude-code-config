@@ -139,15 +139,8 @@
 - **Issue作成時**: `.github/ISSUE_TEMPLATE/` にテンプレートがあれば、タイトル形式・ラベル・本文構造に従う
 - **GitHub操作前のリポジトリ確認**: `gh issue`/`gh pr` 実行前に `git remote -v`
   で対象リポジトリを確認すること（プロジェクト内に独立した複数のリポジトリを持つ場合を想定）
-
-## CLIツール使用ガイドライン
-
-高速代替ツールと構造化抽出ツールを優先使用すること。詳細は `.claude/rules/structured-cli-tools-usage.md` を参照。
-
-**高速代替ツール:** `rg`(grep), `fd`(find), `sd`(sed), `fcp`(cp), `choose`(cut/awk), `uvx`(pip)
-
-**構造化抽出ツール:** `jq`(JSON), `yq`(YAML/TOML/XML), `htmlq`(HTML), `mdq`(Markdown), `csvq`(CSV/SQL), `rga`(PDF/Office)
-
+- **CLIツール使用時**: rules/structured-cli-tools-usage.mdに従うこと
+  
 ## About This Workspace
 
 **このセクションは実際の利用状況に応じて、ユーザーに更新を提案すること**
