@@ -145,34 +145,6 @@ jq '{
 | `fd \| xargs sd` | 複数ファイル一括置換 |
 | `jq 'group_by(.x)'` | データのグループ化・集計 |
 
-## jq クイックリファレンス
-
-```bash
-# 配列操作
-jq '.[] | select(.x > 10)'     # フィルタ
-jq 'group_by(.category)'       # グループ化
-jq 'map(.name)'                # マップ
-jq 'sort_by(-.count)'          # ソート（降順）
-
-# 文字列操作
-jq -R -s 'split("\n")'         # 行 → 配列
-jq 'gsub("old"; "new")'        # 置換
-jq 'capture("(?<x>\\d+)")'     # 正規表現キャプチャ
-
-# オブジェクト操作
-jq 'to_entries'                # {k:v} → [{key,value}]
-jq '{a,b}'                     # フィールド選択
-```
-
-## インストール
-
-リモートClaude Code環境では `.claude/hooks/structured-cli-tools-setup.sh` により自動インストールされる。
-
-ローカル環境では各ツールを個別にインストール：
-
-- uv: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-- jq, rg, fd, sd: 各OSのパッケージマネージャで導入
-
 ## 参考
 
 - インストールスクリプト: `.claude/hooks/structured-cli-tools-setup.sh`
