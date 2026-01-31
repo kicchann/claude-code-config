@@ -110,17 +110,12 @@ yq -o json '.' config.yaml
 csvq "SELECT name, age FROM users.csv WHERE age > 20"
 
 # 集計
+
 csvq "SELECT department, COUNT(*) FROM employees.csv GROUP BY department"
 
 # 複数ファイル結合
-csvq "SELECT * FROM users.csv u JOIN orders.csv o ON u.id = o.user_id"
-### インデント構造を保持した検索
 
-```bash
-# YAML/Pythonの階層構造を維持して表示
-ogrep "database" config.yaml
-ogrep "def main" script.py
-```
+csvq "SELECT * FROM users.csv u JOIN orders.csv o ON u.id = o.user_id"
 
 ### 設定ファイル分析
 
