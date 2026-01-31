@@ -7,6 +7,9 @@
 #   - fd: Fast file finder
 #   - sd: Fast sed alternative
 #   - mdq: Markdown query tool
+#   - fcp: Fast file copy (cp alternative)
+#   - choose: Fast field selection (cut/awk alternative)
+#   - rga (ripgrep-all): ripgrep for PDFs, Office docs, archives
 #
 # Following best practices: idempotent, fail-safe, proper logging
 
@@ -248,6 +251,109 @@ install_mdq() {
 }
 
 # ============================================
+# 7. fcp - Fast file copy
+# ============================================
+install_fcp() {
+    if command -v fcp &>/dev/null; then
+        log "fcp already installed: $(fcp --version 2>&1 | head -1)"
+        return 0
+    fi
+
+    log "Installing fcp..."
+
+    FCP_VERSION="0.2.1"
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            FCP_ZIP="fcp-${FCP_VERSION}-x86_64-unknown-linux-musl.zip"
+            FCP_BIN="fcp-${FCP_VERSION}-x86_64-unknown-linux-musl"
+            ;;
+        aarch64)
+            FCP_ZIP="fcp-${FCP_VERSION}-aarch64-unknown-linux-gnu.zip"
+            FCP_BIN="fcp-${FCP_VERSION}-aarch64-unknown-linux-gnu"
+            ;;
+    esac
+    FCP_URL="https://github.com/Svetlitski/fcp/releases/download/v${FCP_VERSION}/${FCP_ZIP}"
+
+    if download_with_retry "$FCP_URL" "$TEMP_DIR/$FCP_ZIP" "fcp"; then
+        unzip -q "$TEMP_DIR/$FCP_ZIP" -d "$TEMP_DIR"
+        mv "$TEMP_DIR/$FCP_BIN" "$LOCAL_BIN/fcp"
+        chmod +x "$LOCAL_BIN/fcp"
+        log "fcp installed successfully"
+    else
+        log "Failed to install fcp"
+    fi
+}
+
+# ============================================
+# 8. choose - Fast field selection (cut alternative)
+# ============================================
+install_choose() {
+    if command -v choose &>/dev/null; then
+        log "choose already installed: $(choose --version 2>&1 | head -1)"
+        return 0
+    fi
+
+    log "Installing choose..."
+
+    CHOOSE_VERSION="1.3.7"
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            CHOOSE_FILE="choose-x86_64-unknown-linux-musl"
+            ;;
+        aarch64)
+            CHOOSE_FILE="choose-aarch64-unknown-linux-gnu"
+            ;;
+    esac
+    CHOOSE_URL="https://github.com/theryangeary/choose/releases/download/v${CHOOSE_VERSION}/${CHOOSE_FILE}"
+
+    if download_with_retry "$CHOOSE_URL" "$LOCAL_BIN/choose" "choose"; then
+        chmod +x "$LOCAL_BIN/choose"
+        log "choose installed successfully: $($LOCAL_BIN/choose --version 2>&1 | head -1)"
+    else
+        log "Failed to install choose"
+    fi
+}
+
+# ============================================
+# 9. ripgrep-all (rga) - ripgrep for PDFs, archives, etc.
+# ============================================
+install_rga() {
+    if command -v rga &>/dev/null; then
+        log "rga already installed: $(rga --version 2>&1 | head -1)"
+        return 0
+    fi
+
+    log "Installing ripgrep-all..."
+
+    RGA_VERSION="0.10.10"
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            RGA_TARBALL="ripgrep_all-v${RGA_VERSION}-x86_64-unknown-linux-musl.tar.gz"
+            RGA_DIR="ripgrep_all-v${RGA_VERSION}-x86_64-unknown-linux-musl"
+            ;;
+        aarch64)
+            RGA_TARBALL="ripgrep_all-v${RGA_VERSION}-aarch64-unknown-linux-gnu.tar.gz"
+            RGA_DIR="ripgrep_all-v${RGA_VERSION}-aarch64-unknown-linux-gnu"
+            ;;
+    esac
+    RGA_URL="https://github.com/phiresky/ripgrep-all/releases/download/v${RGA_VERSION}/${RGA_TARBALL}"
+
+    if download_with_retry "$RGA_URL" "$TEMP_DIR/$RGA_TARBALL" "rga"; then
+        tar -xzf "$TEMP_DIR/$RGA_TARBALL" -C "$TEMP_DIR"
+        mv "$TEMP_DIR/$RGA_DIR/rga" "$LOCAL_BIN/rga"
+        chmod +x "$LOCAL_BIN/rga"
+        # Also install rga-preproc if available
+        if [ -f "$TEMP_DIR/$RGA_DIR/rga-preproc" ]; then
+            mv "$TEMP_DIR/$RGA_DIR/rga-preproc" "$LOCAL_BIN/rga-preproc"
+            chmod +x "$LOCAL_BIN/rga-preproc"
+        fi
+        log "rga installed successfully: $($LOCAL_BIN/rga --version 2>&1 | head -1)"
+    else
+        log "Failed to install rga"
+    fi
+}
+
+# ============================================
 # Run installations
 # ============================================
 log "Starting CLI tools installation..."
@@ -258,6 +364,9 @@ install_ripgrep
 install_fd
 install_sd
 install_mdq
+install_fcp
+install_choose
+install_rga
 
 log "CLI tools setup complete"
 exit 0

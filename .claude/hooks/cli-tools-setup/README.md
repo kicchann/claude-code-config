@@ -12,6 +12,9 @@
 | **fd** | 高速ファイル検索（findの代替） | [sharkdp/fd](https://github.com/sharkdp/fd) |
 | **sd** | 高速テキスト置換（sedの代替、直感的な構文） | [chmln/sd](https://github.com/chmln/sd) |
 | **mdq** | Markdownクエリ（見出し・リスト・コードブロック抽出） | [yshavit/mdq](https://github.com/yshavit/mdq) |
+| **fcp** | 高速ファイルコピー（cpの代替、並列処理） | [Svetlitski/fcp](https://github.com/Svetlitski/fcp) |
+| **choose** | フィールド選択（cut/awkの代替、直感的な構文） | [theryangeary/choose](https://github.com/theryangeary/choose) |
+| **rga** | PDF/Office/アーカイブも検索可能なripgrep拡張 | [phiresky/ripgrep-all](https://github.com/phiresky/ripgrep-all) |
 
 ## 特徴
 
@@ -55,6 +58,17 @@ uvx ruff check .
 # mdq: Markdownからデータ抽出
 mdq '# *' README.md              # 全見出しを抽出
 mdq '```bash' README.md          # bashコードブロックを抽出
+
+# fcp: 高速ファイルコピー
+fcp -r src/ backup/              # 並列処理で高速コピー
+
+# choose: フィールド選択（0-indexed）
+cat file.csv | choose 0 2        # 1列目と3列目を抽出
+cat file.csv | choose 1:3        # 2〜4列目を抽出
+
+# rga: PDF/Officeファイルも検索
+rga "keyword" docs/              # PDFやdocxも検索可能
+rga --type pdf "error" logs/     # PDFのみ検索
 ```
 
 ## 参考
