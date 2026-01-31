@@ -1,22 +1,37 @@
 #!/bin/bash
+# =============================================================================
+# structured-cli-tools-setup.sh
+# =============================================================================
 # SessionStart hook: CLI tools auto-installation for remote environments
-# Installs recommended CLI tools for AI-assisted coding:
-#   - uv/uvx: Python package manager
-#   - jq: JSON processor
-#   - rg (ripgrep): Fast text search
-#   - fd: Fast file finder
-#   - sd: Fast sed alternative
-#   - mdq: Markdown query tool
-#   - fcp: Fast file copy (cp alternative)
-#   - choose: Fast field selection (cut/awk alternative)
-#   - rga (ripgrep-all): ripgrep for PDFs, Office docs, archives
-#   - ogrep: Outline grep for indentation-structured text
 #
-# Following best practices: idempotent, fail-safe, proper logging
+# Installs recommended CLI tools for AI-assisted coding:
+#
+# [Fast alternatives]
+#   - rg (ripgrep): grep alternative, 10x faster  (github.com/BurntSushi/ripgrep)
+#   - fd: find alternative                        (github.com/sharkdp/fd)
+#   - sd: sed alternative, intuitive syntax       (github.com/chmln/sd)
+#   - fcp: cp alternative, parallel processing   (github.com/Svetlitski/fcp)
+#   - choose: cut/awk alternative                 (github.com/theryangeary/choose)
+#   - uv/uvx: pip/venv alternative               (github.com/astral-sh/uv)
+#
+# [Structured extraction]
+#   - jq: JSON processor                          (github.com/jqlang/jq)
+#   - mdq: Markdown query                         (github.com/yshavit/mdq)
+#   - ogrep: Indent-aware grep (YAML/Python)     (github.com/kriomant/ogrep-rs)
+#   - rga: ripgrep for PDFs, Office, archives    (github.com/phiresky/ripgrep-all)
+#
+# Features:
+#   - Idempotent: skips already installed tools
+#   - Fail-safe: continues on failure
+#   - Retry: up to 3 attempts with exponential backoff
+#   - Multi-arch: x86_64 / aarch64 (arm64)
+#
+# Reference: https://dev.sin5d.com/バイブコーディングするならこれ入れとけ！なcli/
+# =============================================================================
 
 set -e
 
-LOG_PREFIX="[cli-tools-setup]"
+LOG_PREFIX="[structured-cli-tools-setup]"
 
 log() {
     echo "$LOG_PREFIX $1" >&2

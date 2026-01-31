@@ -142,7 +142,7 @@
 
 ## CLIツール使用ガイドライン
 
-高速代替ツールと構造化抽出ツールを優先使用すること。詳細は `.claude/rules/structured-cli-usage.md` を参照。
+高速代替ツールと構造化抽出ツールを優先使用すること。詳細は `.claude/rules/structured-cli-tools-usage.md` を参照。
 
 **高速代替ツール:** `rg`(grep), `fd`(find), `sd`(sed), `fcp`(cp), `choose`(cut/awk), `uvx`(pip)
 

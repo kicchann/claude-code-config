@@ -10,7 +10,7 @@
           },
           {
             "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./.claude/hooks/cli-tools-setup.sh",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && ./.claude/hooks/structured-cli-tools-setup.sh",
             "timeout": 300
           }
         ]

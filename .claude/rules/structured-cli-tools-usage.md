@@ -114,7 +114,7 @@ jq '{a,b}'                     # フィールド選択
 
 ## インストール
 
-リモートClaude Code環境では `.claude/hooks/cli-tools-setup.sh` により自動インストールされる。
+リモートClaude Code環境では `.claude/hooks/structured-cli-tools-setup.sh` により自動インストールされる。
 
 ローカル環境では各ツールを個別にインストール：
 
@@ -123,5 +123,5 @@ jq '{a,b}'                     # フィールド選択
 
 ## 参考
 
-- 詳細な使用例: `.claude/docs/pipe-examples.md`
-- インストールスクリプト: `.claude/hooks/cli-tools-setup/README.md`
+- インストールスクリプト: `.claude/hooks/structured-cli-tools-setup.sh`
+- [バイブコーディングするならこれ入れとけ！なCLI](https://dev.sin5d.com/バイブコーディングするならこれ入れとけ！なcli/)
