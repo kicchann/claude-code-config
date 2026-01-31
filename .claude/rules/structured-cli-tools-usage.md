@@ -109,6 +109,12 @@ csvq "SELECT department, COUNT(*) FROM employees.csv GROUP BY department"
 
 # 複数ファイル結合
 csvq "SELECT * FROM users.csv u JOIN orders.csv o ON u.id = o.user_id"
+### インデント構造を保持した検索
+
+```bash
+# YAML/Pythonの階層構造を維持して表示
+ogrep "database" config.yaml
+ogrep "def main" script.py
 ```
 
 ### 設定ファイル分析
@@ -134,6 +140,10 @@ jq '{
 | `choose 0 2` | CSVフィールド選択 |
 | `rg --json \| jq` | 検索結果構造化 |
 | `fd \| jq -R -s` | ファイルリスト→JSON |
+| `rg --json \| jq` | 検索結果 → 構造化データ |
+| `mdq \| jq -R -s` | Markdown → JSON |
+| `fd \| xargs sd` | 複数ファイル一括置換 |
+| `jq 'group_by(.x)'` | データのグループ化・集計 |
 
 ## jq クイックリファレンス
 
