@@ -16,6 +16,7 @@
 #
 # [Structured extraction]
 #   - jq: JSON processor                          (github.com/jqlang/jq)
+#   - htmlq: HTML query with CSS selectors       (github.com/mgdm/htmlq)
 #   - mdq: Markdown query                         (github.com/yshavit/mdq)
 #   - ogrep: Indent-aware grep (YAML/Python)     (github.com/kriomant/ogrep-rs)
 #   - rga: ripgrep for PDFs, Office, archives    (github.com/phiresky/ripgrep-all)
@@ -158,7 +159,41 @@ install_jq() {
 }
 
 # ============================================
-# 3. ripgrep (rg) - Fast text search
+# 3. htmlq - HTML query with CSS selectors
+# ============================================
+install_htmlq() {
+    if command -v htmlq &>/dev/null; then
+        log "htmlq already installed: $(htmlq --version 2>&1 | head -1)"
+        return 0
+    fi
+
+    log "Installing htmlq..."
+
+    HTMLQ_VERSION="0.4.0"
+    # htmlq only provides x86_64 Linux binaries currently
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            HTMLQ_TARBALL="htmlq-x86_64-linux.tar.gz"
+            ;;
+        aarch64)
+            log "htmlq: aarch64 not supported, skipping"
+            return 0
+            ;;
+    esac
+    HTMLQ_URL="https://github.com/mgdm/htmlq/releases/download/v${HTMLQ_VERSION}/${HTMLQ_TARBALL}"
+
+    if download_with_retry "$HTMLQ_URL" "$TEMP_DIR/$HTMLQ_TARBALL" "htmlq"; then
+        tar -xzf "$TEMP_DIR/$HTMLQ_TARBALL" -C "$TEMP_DIR"
+        mv "$TEMP_DIR/htmlq" "$LOCAL_BIN/htmlq"
+        chmod +x "$LOCAL_BIN/htmlq"
+        log "htmlq installed successfully: $($LOCAL_BIN/htmlq --version 2>&1 | head -1)"
+    else
+        log "Failed to install htmlq"
+    fi
+}
+
+# ============================================
+# 4. ripgrep (rg) - Fast text search
 # ============================================
 install_ripgrep() {
     if command -v rg &>/dev/null; then
@@ -410,6 +445,7 @@ log "Starting CLI tools installation..."
 
 install_uv
 install_jq
+install_htmlq
 install_ripgrep
 install_fd
 install_sd

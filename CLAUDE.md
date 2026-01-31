@@ -146,7 +146,7 @@
 
 **高速代替ツール:** `rg`(grep), `fd`(find), `sd`(sed), `fcp`(cp), `choose`(cut/awk), `uvx`(pip)
 
-**構造化抽出ツール:** `jq`(JSON), `mdq`(Markdown), `ogrep`(YAML/インデント), `rga`(PDF/Office)
+**構造化抽出ツール:** `jq`(JSON), `htmlq`(HTML), `mdq`(Markdown), `ogrep`(YAML/インデント), `rga`(PDF/Office)
 
 ## About This Workspace
 

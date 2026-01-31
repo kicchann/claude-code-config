@@ -22,6 +22,7 @@
 | データ形式 | ツール | 例 |
 |-----------|--------|-----|
 | JSON | `jq` | `curl api \| jq '.items[].name'` |
+| HTML | `htmlq` | `curl url \| htmlq 'a' --attribute href` |
 | Markdown | `mdq` | `mdq '# 見出し' < README.md` |
 | YAML/インデント | `ogrep` | `ogrep "key" config.yaml` |
 | CSV/TSV | `choose` | `cat data.csv \| choose 0 2` |
@@ -52,6 +53,19 @@ fd -e md .claude/commands/ | jq -R -s '
   map(split("/") | {dir: .[-2], file: .[-1]}) |
   group_by(.dir) | map({dir: .[0].dir, count: length})
 '
+```
+
+### HTML抽出
+
+```bash
+# リンクのhref属性を抽出
+curl -s https://example.com | htmlq 'a' --attribute href
+
+# 特定クラスのテキスト抽出
+htmlq '.content p' --text < page.html
+
+# テーブルデータ抽出
+htmlq 'table tr td' --text < data.html
 ```
 
 ### Markdown抽出
@@ -89,6 +103,7 @@ jq '{
 |---------|------|
 | `fd \| jq -R -s` | ファイルリスト → JSON配列 |
 | `rg --json \| jq` | 検索結果 → 構造化データ |
+| `curl \| htmlq 'selector'` | HTML → 要素抽出 |
 | `mdq \| jq -R -s` | Markdown → JSON |
 | `fd \| xargs sd` | 複数ファイル一括置換 |
 | `jq 'group_by(.x)'` | データのグループ化・集計 |
