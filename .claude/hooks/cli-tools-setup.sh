@@ -10,6 +10,7 @@
 #   - fcp: Fast file copy (cp alternative)
 #   - choose: Fast field selection (cut/awk alternative)
 #   - rga (ripgrep-all): ripgrep for PDFs, Office docs, archives
+#   - ogrep: Outline grep for indentation-structured text
 #
 # Following best practices: idempotent, fail-safe, proper logging
 
@@ -354,6 +355,40 @@ install_rga() {
 }
 
 # ============================================
+# 10. ogrep - Outline grep for indentation-structured text
+# ============================================
+install_ogrep() {
+    if command -v ogrep &>/dev/null; then
+        log "ogrep already installed: $(ogrep --version 2>&1 | head -1)"
+        return 0
+    fi
+
+    log "Installing ogrep..."
+
+    OGREP_VERSION="0.6.0"
+    # ogrep-rs only provides x86_64 Linux binaries currently
+    case "$ARCH_SUFFIX" in
+        x86_64)
+            OGREP_TARBALL="ogrep-rs_${OGREP_VERSION}_x86_64-unknown-linux-musl.tar.gz"
+            ;;
+        aarch64)
+            log "ogrep: aarch64 not supported, skipping"
+            return 0
+            ;;
+    esac
+    OGREP_URL="https://github.com/kriomant/ogrep-rs/releases/download/${OGREP_VERSION}/${OGREP_TARBALL}"
+
+    if download_with_retry "$OGREP_URL" "$TEMP_DIR/$OGREP_TARBALL" "ogrep"; then
+        tar -xzf "$TEMP_DIR/$OGREP_TARBALL" -C "$TEMP_DIR"
+        mv "$TEMP_DIR/ogrep" "$LOCAL_BIN/ogrep"
+        chmod +x "$LOCAL_BIN/ogrep"
+        log "ogrep installed successfully: $($LOCAL_BIN/ogrep --version 2>&1 | head -1)"
+    else
+        log "Failed to install ogrep"
+    fi
+}
+
+# ============================================
 # Run installations
 # ============================================
 log "Starting CLI tools installation..."
@@ -367,6 +402,7 @@ install_mdq
 install_fcp
 install_choose
 install_rga
+install_ogrep
 
 log "CLI tools setup complete"
 exit 0

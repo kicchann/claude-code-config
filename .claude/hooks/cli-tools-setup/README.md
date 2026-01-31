@@ -15,6 +15,7 @@
 | **fcp** | 高速ファイルコピー（cpの代替、並列処理） | [Svetlitski/fcp](https://github.com/Svetlitski/fcp) |
 | **choose** | フィールド選択（cut/awkの代替、直感的な構文） | [theryangeary/choose](https://github.com/theryangeary/choose) |
 | **rga** | PDF/Office/アーカイブも検索可能なripgrep拡張 | [phiresky/ripgrep-all](https://github.com/phiresky/ripgrep-all) |
+| **ogrep** | インデント構造テキスト検索（YAML/Python等に最適） | [kriomant/ogrep-rs](https://github.com/kriomant/ogrep-rs) |
 
 ## 特徴
 
@@ -69,6 +70,10 @@ cat file.csv | choose 1:3        # 2〜4列目を抽出
 # rga: PDF/Officeファイルも検索
 rga "keyword" docs/              # PDFやdocxも検索可能
 rga --type pdf "error" logs/     # PDFのみ検索
+
+# ogrep: インデント構造を考慮した検索
+ogrep "pattern" config.yaml      # YAMLの階層構造を保持して表示
+ogrep "def main" script.py       # Python関数の親階層も表示
 ```
 
 ## 参考
