@@ -81,7 +81,7 @@ Request: $ARGUMENTS
 
 5. **Get explicit user approval before proceeding**
 
-**Plan Template**: 設計の出力形式として `.claude/rules/plan-template.md` を使用してください。
+**Plan Template**: Use `.claude/rules/plan-template.md` as the output format for the design.
 
 ---
 
