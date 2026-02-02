@@ -1,3 +1,7 @@
+---
+paths: /never/match/folder/**
+---
+
 # Implementation Plan Template
 
 `/implement` コマンドの Phase 3（設計）で使用するテンプレートです。
