@@ -139,7 +139,7 @@
 - **GitHub操作前のリポジトリ確認**: `gh issue`/`gh pr` 実行前に `git remote -v`
   で対象リポジトリを確認する（プロジェクト内に独立した複数のリポジトリを持つ場合を想定）
 - **CLIツール使用時**: `rules/structured-cli-tools-usage.md` に従う
-  
+
 ## About This Workspace
 
 **このセクションは実際の利用状況に応じて、ユーザーに更新を提案すること**
@@ -169,6 +169,6 @@
 ### ドキュメント
 
 - アーキテクチャ全体: `.claude/rules/`
-- 各アプリの詳細: 各`apps/*/CLAUDE.md`を参照
+- 各アプリの詳細: 各`apps/*/.claude/` `apps/*/CLAUDE.md`を参照
 
-**作業開始前に適切なディレクトリへ移動してください。**
+**作業開始前に適切なディレクトリへ移動して、各`apps/*/.claude/` `apps/*/CLAUDE.md`を使用してください。**
