@@ -4,6 +4,76 @@ const path = require("path");
 const fs = require("fs");
 
 /**
+ * Calculate display width of a string (fullwidth=2, halfwidth=1)
+ * @param {string} str
+ * @returns {number}
+ */
+const getDisplayWidth = (str) => {
+  let width = 0;
+  for (const ch of str) {
+    const cp = ch.codePointAt(0);
+    // CJK Unified Ideographs, Hiragana, Katakana, Fullwidth Forms,
+    // CJK Symbols, Hangul, CJK Compatibility, etc.
+    if (
+      (cp >= 0x1100 && cp <= 0x115f) ||  // Hangul Jamo
+      (cp >= 0x2e80 && cp <= 0x303e) ||  // CJK Radicals, Kangxi, Symbols
+      (cp >= 0x3040 && cp <= 0x33bf) ||  // Hiragana, Katakana, CJK Compat
+      (cp >= 0x3400 && cp <= 0x4dbf) ||  // CJK Unified Ext A
+      (cp >= 0x4e00 && cp <= 0xa4cf) ||  // CJK Unified, Yi
+      (cp >= 0xac00 && cp <= 0xd7af) ||  // Hangul Syllables
+      (cp >= 0xf900 && cp <= 0xfaff) ||  // CJK Compatibility Ideographs
+      (cp >= 0xfe30 && cp <= 0xfe6f) ||  // CJK Compatibility Forms
+      (cp >= 0xff01 && cp <= 0xff60) ||  // Fullwidth Forms
+      (cp >= 0xffe0 && cp <= 0xffe6) ||  // Fullwidth Signs
+      (cp >= 0x20000 && cp <= 0x2fa1f)   // CJK Unified Ext B-F, Compat Supp
+    ) {
+      width += 2;
+    } else {
+      width += 1;
+    }
+  }
+  return width;
+};
+
+/**
+ * Truncate string to fit within maxWidth display columns
+ * @param {string} str
+ * @param {number} maxWidth - max display width (columns)
+ * @returns {string}
+ */
+const truncateByWidth = (str, maxWidth) => {
+  const ellipsis = "...";
+  const ellipsisWidth = 3;
+  if (getDisplayWidth(str) <= maxWidth) return str;
+  let width = 0;
+  let result = "";
+  for (const ch of str) {
+    const cp = ch.codePointAt(0);
+    const cw =
+      (cp >= 0x1100 && cp <= 0x115f) ||
+      (cp >= 0x2e80 && cp <= 0x303e) ||
+      (cp >= 0x3040 && cp <= 0x33bf) ||
+      (cp >= 0x3400 && cp <= 0x4dbf) ||
+      (cp >= 0x4e00 && cp <= 0xa4cf) ||
+      (cp >= 0xac00 && cp <= 0xd7af) ||
+      (cp >= 0xf900 && cp <= 0xfaff) ||
+      (cp >= 0xfe30 && cp <= 0xfe6f) ||
+      (cp >= 0xff01 && cp <= 0xff60) ||
+      (cp >= 0xffe0 && cp <= 0xffe6) ||
+      (cp >= 0x20000 && cp <= 0x2fa1f)
+        ? 2
+        : 1;
+    if (width + cw > maxWidth - ellipsisWidth) break;
+    result += ch;
+    width += cw;
+  }
+  return result + ellipsis;
+};
+
+/** Max display width for summary (columns). Fits half-screen (~80-90 cols) */
+const SUMMARY_MAX_WIDTH = 35;
+
+/**
  * Get session summary (title) from sessions-index.json
  * @param {string} transcriptPath - Path to the transcript file
  * @returns {string} - Session summary or empty string
@@ -23,10 +93,7 @@ const getSessionSummary = (transcriptPath) => {
 
       for (const entry of Object.values(entries)) {
         if (entry.sessionId === sessionId && entry.summary) {
-          const summary = entry.summary;
-          return summary.length > 23
-            ? summary.substring(0, 20) + "..."
-            : summary;
+          return truncateByWidth(entry.summary, SUMMARY_MAX_WIDTH);
         }
       }
     }
@@ -69,7 +136,7 @@ const getSessionSummary = (transcriptPath) => {
             text = text.replace(/<[^>]+\/>/g, "").trim();
 
             if (text && text.length > 0) {
-              return text.length > 23 ? text.substring(0, 20) + "..." : text;
+              return truncateByWidth(text, SUMMARY_MAX_WIDTH);
             }
           }
         } catch (e) {
