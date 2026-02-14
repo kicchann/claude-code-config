@@ -15,17 +15,17 @@ const getDisplayWidth = (str) => {
     // CJK Unified Ideographs, Hiragana, Katakana, Fullwidth Forms,
     // CJK Symbols, Hangul, CJK Compatibility, etc.
     if (
-      (cp >= 0x1100 && cp <= 0x115f) ||  // Hangul Jamo
-      (cp >= 0x2e80 && cp <= 0x303e) ||  // CJK Radicals, Kangxi, Symbols
-      (cp >= 0x3040 && cp <= 0x33bf) ||  // Hiragana, Katakana, CJK Compat
-      (cp >= 0x3400 && cp <= 0x4dbf) ||  // CJK Unified Ext A
-      (cp >= 0x4e00 && cp <= 0xa4cf) ||  // CJK Unified, Yi
-      (cp >= 0xac00 && cp <= 0xd7af) ||  // Hangul Syllables
-      (cp >= 0xf900 && cp <= 0xfaff) ||  // CJK Compatibility Ideographs
-      (cp >= 0xfe30 && cp <= 0xfe6f) ||  // CJK Compatibility Forms
-      (cp >= 0xff01 && cp <= 0xff60) ||  // Fullwidth Forms
-      (cp >= 0xffe0 && cp <= 0xffe6) ||  // Fullwidth Signs
-      (cp >= 0x20000 && cp <= 0x2fa1f)   // CJK Unified Ext B-F, Compat Supp
+      (cp >= 0x1100 && cp <= 0x115f) || // Hangul Jamo
+      (cp >= 0x2e80 && cp <= 0x303e) || // CJK Radicals, Kangxi, Symbols
+      (cp >= 0x3040 && cp <= 0x33bf) || // Hiragana, Katakana, CJK Compat
+      (cp >= 0x3400 && cp <= 0x4dbf) || // CJK Unified Ext A
+      (cp >= 0x4e00 && cp <= 0xa4cf) || // CJK Unified, Yi
+      (cp >= 0xac00 && cp <= 0xd7af) || // Hangul Syllables
+      (cp >= 0xf900 && cp <= 0xfaff) || // CJK Compatibility Ideographs
+      (cp >= 0xfe30 && cp <= 0xfe6f) || // CJK Compatibility Forms
+      (cp >= 0xff01 && cp <= 0xff60) || // Fullwidth Forms
+      (cp >= 0xffe0 && cp <= 0xffe6) || // Fullwidth Signs
+      (cp >= 0x20000 && cp <= 0x2fa1f) // CJK Unified Ext B-F, Compat Supp
     ) {
       width += 2;
     } else {
@@ -44,6 +44,11 @@ const getDisplayWidth = (str) => {
 const truncateByWidth = (str, maxWidth) => {
   const ellipsis = "...";
   const ellipsisWidth = 3;
+  // 改行・制御文字をスペースに置換（statuslineは1行表示）
+  str = str
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
   if (getDisplayWidth(str) <= maxWidth) return str;
   let width = 0;
   let result = "";
@@ -70,8 +75,172 @@ const truncateByWidth = (str, maxWidth) => {
   return result + ellipsis;
 };
 
-/** Max display width for summary (columns). Fits half-screen (~80-90 cols) */
-const SUMMARY_MAX_WIDTH = 35;
+/** Max display width for summary (columns) */
+const SUMMARY_MAX_WIDTH = 60;
+
+/**
+ * Get repo slug (owner/name) from git remote origin URL.
+ * @param {string} cwd - Working directory
+ * @returns {string} - e.g. "okappy/glcommentary" or ""
+ */
+const getRepoSlug = (cwd) => {
+  try {
+    let dir = path.resolve(cwd);
+    while (dir !== path.dirname(dir)) {
+      const gitPath = path.join(dir, ".git");
+      if (fs.existsSync(gitPath)) {
+        let configDir = gitPath;
+        const stat = fs.statSync(gitPath);
+        if (!stat.isDirectory()) {
+          const content = fs.readFileSync(gitPath, "utf-8").trim();
+          const m = content.match(/^gitdir:\s*(.+)$/);
+          if (m) {
+            const gitDir = path.isAbsolute(m[1])
+              ? m[1]
+              : path.resolve(dir, m[1]);
+            const commonDirFile = path.join(gitDir, "commondir");
+            if (fs.existsSync(commonDirFile)) {
+              configDir = path.resolve(
+                gitDir,
+                fs.readFileSync(commonDirFile, "utf-8").trim(),
+              );
+            } else {
+              configDir = gitDir;
+            }
+          }
+        }
+        const configPath = path.join(configDir, "config");
+        if (fs.existsSync(configPath)) {
+          const config = fs.readFileSync(configPath, "utf-8");
+          const urlMatch = config.match(
+            /url\s*=\s*(?:https?:\/\/[^/]+\/|git@[^:]+:)([^/\s]+\/[^/\s]+?)(?:\.git)?\s*$/m,
+          );
+          if (urlMatch) return urlMatch[1];
+        }
+        break;
+      }
+      dir = path.dirname(dir);
+    }
+    return "";
+  } catch (err) {
+    return "";
+  }
+};
+
+/**
+ * Get issue info when branch name is an issue number.
+ * Cache key: "owner/repo#number" to avoid collisions across repos.
+ * Sources (in order): cache file → daily-tasks.md → gh CLI (with cache write)
+ * @param {string} branch - Git branch name
+ * @param {string} cwd - Working directory for repo detection
+ * @returns {{title: string, repo: string} | null}
+ */
+const getIssueInfo = (branch, cwd) => {
+  try {
+    if (!branch || !/^\d+$/.test(branch)) return null;
+    const home = process.env.HOME || "";
+    const cacheDir = path.join(home, ".claude", "cache");
+    const cachePath = path.join(cacheDir, "issue-titles.json");
+
+    const repo = getRepoSlug(cwd);
+    const cacheKey = repo ? `${repo}#${branch}` : branch;
+
+    // 1. キャッシュから取得
+    let cache = {};
+    if (fs.existsSync(cachePath)) {
+      cache = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
+      if (cache[cacheKey]) {
+        return { title: cache[cacheKey], repo };
+      }
+    }
+
+    // 2. daily-tasks.md からパース
+    const dailyPath = path.join(home, ".claude", "rules", "daily-tasks.md");
+    if (fs.existsSync(dailyPath)) {
+      const content = fs.readFileSync(dailyPath, "utf-8");
+      const re = new RegExp(`^\\|\\s*${branch}\\s*\\|\\s*([^|]+)`, "m");
+      const m = content.match(re);
+      if (m) {
+        const title = m[1].trim();
+        try {
+          if (!fs.existsSync(cacheDir))
+            fs.mkdirSync(cacheDir, { recursive: true });
+          cache[cacheKey] = title;
+          fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+        } catch (_) {}
+        return { title, repo };
+      }
+    }
+
+    // 3. gh CLI で取得してキャッシュ（遅いので最終手段）
+    try {
+      const { execSync } = require("child_process");
+      const ghCmd = repo
+        ? `gh issue view ${branch} -R ${repo} --json title -q .title 2>/dev/null`
+        : `gh issue view ${branch} --json title -q .title 2>/dev/null`;
+      const title = execSync(ghCmd, {
+        timeout: 3000,
+        encoding: "utf-8",
+      }).trim();
+      if (title) {
+        try {
+          if (!fs.existsSync(cacheDir))
+            fs.mkdirSync(cacheDir, { recursive: true });
+          cache[cacheKey] = title;
+          fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+        } catch (_) {}
+        return { title, repo };
+      }
+    } catch (_) {}
+
+    return null;
+  } catch (err) {
+    return null;
+  }
+};
+
+/**
+ * Get PR number for branch (cached).
+ * Cache: ~/.claude/cache/pr-numbers.json with key "owner/repo#branch"
+ * @param {string} branch
+ * @param {string} repo
+ * @returns {string} - PR number or empty string
+ */
+const getPrNumber = (branch, repo) => {
+  try {
+    if (!branch || !repo) return "";
+    const home = process.env.HOME || "";
+    const cacheDir = path.join(home, ".claude", "cache");
+    const cachePath = path.join(cacheDir, "pr-numbers.json");
+    const cacheKey = `${repo}#${branch}`;
+
+    // キャッシュから取得
+    let cache = {};
+    if (fs.existsSync(cachePath)) {
+      cache = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
+      if (cache[cacheKey]) return cache[cacheKey];
+    }
+
+    // gh CLI で取得
+    const { execSync } = require("child_process");
+    const prNum = execSync(
+      `gh pr list --head ${branch} -R ${repo} --json number -q '.[0].number' 2>/dev/null`,
+      { timeout: 3000, encoding: "utf-8" },
+    ).trim();
+    if (prNum) {
+      try {
+        if (!fs.existsSync(cacheDir))
+          fs.mkdirSync(cacheDir, { recursive: true });
+        cache[cacheKey] = prNum;
+        fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+      } catch (_) {}
+      return prNum;
+    }
+    return "";
+  } catch (_) {
+    return "";
+  }
+};
 
 /**
  * Get session summary (title) from sessions-index.json
@@ -101,8 +270,8 @@ const getSessionSummary = (transcriptPath) => {
     // indexに無い場合、transcriptファイルの先頭部分から最初のユーザープロンプトを取得
     if (fs.existsSync(transcriptPath)) {
       const fd = fs.openSync(transcriptPath, "r");
-      const buf = Buffer.alloc(8192); // 先頭8KBのみ読む
-      const bytesRead = fs.readSync(fd, buf, 0, 8192, 0);
+      const buf = Buffer.alloc(32768); // 先頭32KBを読む（コマンドタグが大きい場合に対応）
+      const bytesRead = fs.readSync(fd, buf, 0, 32768, 0);
       fs.closeSync(fd);
       const content = buf.toString("utf-8", 0, bytesRead);
       const lines = content.split("\n").filter((line) => line.trim());
@@ -125,6 +294,15 @@ const getSessionSummary = (transcriptPath) => {
               text = msgContent;
             }
 
+            // コマンドタグからテキストを抽出（例: <command-name>/mcp</command-name> → /mcp）
+            // command-message, command-args の内容を優先的に取得
+            const cmdMatch = text.match(
+              /<command-args>([^<]+)<\/command-args>/,
+            );
+            const cmdMsgMatch = text.match(
+              /<command-message>([^<]+)<\/command-message>/,
+            );
+
             // システムタグを除外してテキストを抽出
             // <tag>...</tag> 形式のタグを繰り返し除去
             let prevText;
@@ -134,6 +312,13 @@ const getSessionSummary = (transcriptPath) => {
             } while (text !== prevText);
             // 自己閉じタグも除去
             text = text.replace(/<[^>]+\/>/g, "").trim();
+
+            // タグ除去後が空の場合、コマンド情報を使う
+            if (!text && (cmdMatch?.[1] || cmdMsgMatch?.[1])) {
+              const cmd = cmdMsgMatch?.[1] || "";
+              const args = cmdMatch?.[1] || "";
+              text = args ? `/${cmd} ${args}`.trim() : `/${cmd}`.trim();
+            }
 
             if (text && text.length > 0) {
               return truncateByWidth(text, SUMMARY_MAX_WIDTH);
@@ -344,8 +529,6 @@ const buildStatusLine = (input) => {
         : "\x1b[32m"; // Green
 
   const osEmoji = getPlatformEmoji();
-  const summary = getSessionSummary(data.transcript_path);
-  const summaryPart = summary ? ` 📝 \x1b[36m${summary}\x1b[0m` : "";
   const modelColor = getModelColor(model);
   const gitBranch = getGitBranch(
     data.workspace?.current_dir || data.cwd || ".",
@@ -353,7 +536,31 @@ const buildStatusLine = (input) => {
   const locationPart = gitBranch
     ? ` 🔀 \x1b[96m${gitBranch}\x1b[0m`
     : ` 📁 \x1b[37m${currentDir}\x1b[0m`;
-  return `${osEmoji} ${modelColor}[${model}]\x1b[0m${locationPart}${summaryPart} 🪙 ${percentageColor}${percentage}%\x1b[0m`;
+  // issueタイトルを優先（OSC 8リンク付き）、なければセッションサマリー
+  const cwdPath = data.workspace?.current_dir || data.cwd || ".";
+  const issueInfo = getIssueInfo(gitBranch, cwdPath);
+  let summaryPart = "";
+  if (issueInfo) {
+    const link = (text, url) => `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
+    const prNum = getPrNumber(gitBranch, issueInfo.repo);
+    const issueText = truncateByWidth(
+      `#${gitBranch} ${issueInfo.title}`,
+      SUMMARY_MAX_WIDTH,
+    );
+    const issueUrl = issueInfo.repo
+      ? `https://github.com/${issueInfo.repo}/issues/${gitBranch}`
+      : "";
+    const issuePart = issueUrl ? link(issueText, issueUrl) : issueText;
+    const prPart =
+      prNum && issueInfo.repo
+        ? ` ${link(`PR#${prNum}`, `https://github.com/${issueInfo.repo}/pull/${prNum}`)}`
+        : "";
+    summaryPart = ` 📝 \x1b[36m${issuePart}${prPart}\x1b[0m`;
+  } else {
+    const summary = getSessionSummary(data.transcript_path);
+    if (summary) summaryPart = ` 📝 \x1b[36m${summary}\x1b[0m`;
+  }
+  return `${osEmoji} ${modelColor}[${model}]\x1b[0m${summaryPart} ${locationPart} 🪙 ${percentageColor}${percentage}%\x1b[0m`;
 };
 
 const chunks = [];
