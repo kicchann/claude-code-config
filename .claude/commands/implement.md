@@ -168,7 +168,11 @@ Request: $ARGUMENTS
    - Files created/modified
    - Test coverage
    - Key decisions made
-3. Suggest next steps:
+3. **手動テスト項目を生成**:
+   - 変更の影響範囲を分析
+   - 人間が確認すべき項目をリスト化
+   - 確認不要な範囲とその根拠
+4. Suggest next steps:
    - Run full test suite: `/test`
    - Run linter: `/lint`
    - Commit changes: `/commit-push-pr`

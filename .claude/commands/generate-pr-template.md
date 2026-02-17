@@ -72,12 +72,25 @@ Closes #N
 
 ## Test plan
 
-- [ ] [テスト項目1]
-- [ ] [テスト項目2]
+### Automated tests
+- [x] pytest 全テスト PASS（N件）
+- [x] lint PASS
+
+### Manual verification
+- [ ] [変更内容に基づく手動確認項目1]
+- [ ] [変更内容に基づく手動確認項目2]
+- [ ] 影響がないことの確認: [根拠]
 
 ---
 🤖 Generated with Claude Code
 ```
+
+`## Test plan` セクションでは、変更の影響範囲を分析し:
+- **Automated tests**: 実行済みの自動テスト結果を記載
+- **Manual verification**: 人間が確認すべき項目を具体的に記載。以下を考慮:
+  - 新規/変更したAPI・画面の動作確認
+  - 変更に依存する既存機能の影響確認
+  - 確認不要の場合はその根拠を記載
 
 ### 4. 出力
 
@@ -85,7 +98,7 @@ Closes #N
 
 ## 使用例
 
-```
+```text
 /generate-pr-template #10
 ```
 

@@ -4,6 +4,245 @@ const path = require("path");
 const fs = require("fs");
 
 /**
+ * Calculate display width of a string (fullwidth=2, halfwidth=1)
+ * @param {string} str
+ * @returns {number}
+ */
+const getDisplayWidth = (str) => {
+  let width = 0;
+  for (const ch of str) {
+    const cp = ch.codePointAt(0);
+    // CJK Unified Ideographs, Hiragana, Katakana, Fullwidth Forms,
+    // CJK Symbols, Hangul, CJK Compatibility, etc.
+    if (
+      (cp >= 0x1100 && cp <= 0x115f) || // Hangul Jamo
+      (cp >= 0x2e80 && cp <= 0x303e) || // CJK Radicals, Kangxi, Symbols
+      (cp >= 0x3040 && cp <= 0x33bf) || // Hiragana, Katakana, CJK Compat
+      (cp >= 0x3400 && cp <= 0x4dbf) || // CJK Unified Ext A
+      (cp >= 0x4e00 && cp <= 0xa4cf) || // CJK Unified, Yi
+      (cp >= 0xac00 && cp <= 0xd7af) || // Hangul Syllables
+      (cp >= 0xf900 && cp <= 0xfaff) || // CJK Compatibility Ideographs
+      (cp >= 0xfe30 && cp <= 0xfe6f) || // CJK Compatibility Forms
+      (cp >= 0xff01 && cp <= 0xff60) || // Fullwidth Forms
+      (cp >= 0xffe0 && cp <= 0xffe6) || // Fullwidth Signs
+      (cp >= 0x20000 && cp <= 0x2fa1f) // CJK Unified Ext B-F, Compat Supp
+    ) {
+      width += 2;
+    } else {
+      width += 1;
+    }
+  }
+  return width;
+};
+
+/**
+ * Truncate string to fit within maxWidth display columns
+ * @param {string} str
+ * @param {number} maxWidth - max display width (columns)
+ * @returns {string}
+ */
+const truncateByWidth = (str, maxWidth) => {
+  const ellipsis = "...";
+  const ellipsisWidth = 3;
+  // 改行・制御文字をスペースに置換（statuslineは1行表示）
+  str = str
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  if (getDisplayWidth(str) <= maxWidth) return str;
+  let width = 0;
+  let result = "";
+  for (const ch of str) {
+    const cp = ch.codePointAt(0);
+    const cw =
+      (cp >= 0x1100 && cp <= 0x115f) ||
+      (cp >= 0x2e80 && cp <= 0x303e) ||
+      (cp >= 0x3040 && cp <= 0x33bf) ||
+      (cp >= 0x3400 && cp <= 0x4dbf) ||
+      (cp >= 0x4e00 && cp <= 0xa4cf) ||
+      (cp >= 0xac00 && cp <= 0xd7af) ||
+      (cp >= 0xf900 && cp <= 0xfaff) ||
+      (cp >= 0xfe30 && cp <= 0xfe6f) ||
+      (cp >= 0xff01 && cp <= 0xff60) ||
+      (cp >= 0xffe0 && cp <= 0xffe6) ||
+      (cp >= 0x20000 && cp <= 0x2fa1f)
+        ? 2
+        : 1;
+    if (width + cw > maxWidth - ellipsisWidth) break;
+    result += ch;
+    width += cw;
+  }
+  return result + ellipsis;
+};
+
+/** Max display width for summary (columns) */
+const SUMMARY_MAX_WIDTH = 60;
+
+/**
+ * Get repo slug (owner/name) from git remote origin URL.
+ * @param {string} cwd - Working directory
+ * @returns {string} - e.g. "okappy/glcommentary" or ""
+ */
+const getRepoSlug = (cwd) => {
+  try {
+    let dir = path.resolve(cwd);
+    while (dir !== path.dirname(dir)) {
+      const gitPath = path.join(dir, ".git");
+      if (fs.existsSync(gitPath)) {
+        let configDir = gitPath;
+        const stat = fs.statSync(gitPath);
+        if (!stat.isDirectory()) {
+          const content = fs.readFileSync(gitPath, "utf-8").trim();
+          const m = content.match(/^gitdir:\s*(.+)$/);
+          if (m) {
+            const gitDir = path.isAbsolute(m[1])
+              ? m[1]
+              : path.resolve(dir, m[1]);
+            const commonDirFile = path.join(gitDir, "commondir");
+            if (fs.existsSync(commonDirFile)) {
+              configDir = path.resolve(
+                gitDir,
+                fs.readFileSync(commonDirFile, "utf-8").trim(),
+              );
+            } else {
+              configDir = gitDir;
+            }
+          }
+        }
+        const configPath = path.join(configDir, "config");
+        if (fs.existsSync(configPath)) {
+          const config = fs.readFileSync(configPath, "utf-8");
+          const urlMatch = config.match(
+            /url\s*=\s*(?:https?:\/\/[^/]+\/|git@[^:]+:)([^/\s]+\/[^/\s]+?)(?:\.git)?\s*$/m,
+          );
+          if (urlMatch) return urlMatch[1];
+        }
+        break;
+      }
+      dir = path.dirname(dir);
+    }
+    return "";
+  } catch (err) {
+    return "";
+  }
+};
+
+/**
+ * Get issue info when branch name is an issue number.
+ * Cache key: "owner/repo#number" to avoid collisions across repos.
+ * Sources (in order): cache file → daily-tasks.md → gh CLI (with cache write)
+ * @param {string} branch - Git branch name
+ * @param {string} cwd - Working directory for repo detection
+ * @returns {{title: string, repo: string} | null}
+ */
+const getIssueInfo = (branch, cwd) => {
+  try {
+    if (!branch || !/^\d+$/.test(branch)) return null;
+    const home = process.env.HOME || "";
+    const cacheDir = path.join(home, ".claude", "cache");
+    const cachePath = path.join(cacheDir, "issue-titles.json");
+
+    const repo = getRepoSlug(cwd);
+    const cacheKey = repo ? `${repo}#${branch}` : branch;
+
+    // 1. キャッシュから取得
+    let cache = {};
+    if (fs.existsSync(cachePath)) {
+      cache = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
+      if (cache[cacheKey]) {
+        return { title: cache[cacheKey], repo };
+      }
+    }
+
+    // 2. daily-tasks.md からパース
+    const dailyPath = path.join(home, ".claude", "rules", "daily-tasks.md");
+    if (fs.existsSync(dailyPath)) {
+      const content = fs.readFileSync(dailyPath, "utf-8");
+      const re = new RegExp(`^\\|\\s*${branch}\\s*\\|\\s*([^|]+)`, "m");
+      const m = content.match(re);
+      if (m) {
+        const title = m[1].trim();
+        try {
+          if (!fs.existsSync(cacheDir))
+            fs.mkdirSync(cacheDir, { recursive: true });
+          cache[cacheKey] = title;
+          fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+        } catch (_) {}
+        return { title, repo };
+      }
+    }
+
+    // 3. gh CLI で取得してキャッシュ（遅いので最終手段）
+    try {
+      const { execSync } = require("child_process");
+      const ghCmd = repo
+        ? `gh issue view ${branch} -R ${repo} --json title -q .title 2>/dev/null`
+        : `gh issue view ${branch} --json title -q .title 2>/dev/null`;
+      const title = execSync(ghCmd, {
+        timeout: 3000,
+        encoding: "utf-8",
+      }).trim();
+      if (title) {
+        try {
+          if (!fs.existsSync(cacheDir))
+            fs.mkdirSync(cacheDir, { recursive: true });
+          cache[cacheKey] = title;
+          fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+        } catch (_) {}
+        return { title, repo };
+      }
+    } catch (_) {}
+
+    return null;
+  } catch (err) {
+    return null;
+  }
+};
+
+/**
+ * Get PR number for branch (cached).
+ * Cache: ~/.claude/cache/pr-numbers.json with key "owner/repo#branch"
+ * @param {string} branch
+ * @param {string} repo
+ * @returns {string} - PR number or empty string
+ */
+const getPrNumber = (branch, repo) => {
+  try {
+    if (!branch || !repo) return "";
+    const home = process.env.HOME || "";
+    const cacheDir = path.join(home, ".claude", "cache");
+    const cachePath = path.join(cacheDir, "pr-numbers.json");
+    const cacheKey = `${repo}#${branch}`;
+
+    // キャッシュから取得
+    let cache = {};
+    if (fs.existsSync(cachePath)) {
+      cache = JSON.parse(fs.readFileSync(cachePath, "utf-8"));
+      if (cache[cacheKey]) return cache[cacheKey];
+    }
+
+    // gh CLI で取得
+    const { execSync } = require("child_process");
+    const prNum = execSync(
+      `gh pr list --head ${branch} -R ${repo} --json number -q '.[0].number' 2>/dev/null`,
+      { timeout: 3000, encoding: "utf-8" },
+    ).trim();
+    if (prNum) {
+      try {
+        if (!fs.existsSync(cacheDir))
+          fs.mkdirSync(cacheDir, { recursive: true });
+        cache[cacheKey] = prNum;
+        fs.writeFileSync(cachePath, JSON.stringify(cache, null, 2));
+      } catch (_) {}
+      return prNum;
+    }
+    return "";
+  } catch (_) {
+    return "";
+  }
+};
+
+/**
  * Get session summary (title) from sessions-index.json
  * @param {string} transcriptPath - Path to the transcript file
  * @returns {string} - Session summary or empty string
@@ -58,6 +297,15 @@ const getSessionSummary = (transcriptPath) => {
               text = msgContent;
             }
 
+            // コマンドタグからテキストを抽出（例: <command-name>/mcp</command-name> → /mcp）
+            // command-message, command-args の内容を優先的に取得
+            const cmdMatch = text.match(
+              /<command-args>([^<]+)<\/command-args>/,
+            );
+            const cmdMsgMatch = text.match(
+              /<command-message>([^<]+)<\/command-message>/,
+            );
+
             // システムタグを除外してテキストを抽出
             // <tag>...</tag> 形式のタグを繰り返し除去
             let prevText;
@@ -67,6 +315,13 @@ const getSessionSummary = (transcriptPath) => {
             } while (text !== prevText);
             // 自己閉じタグも除去
             text = text.replace(/<[^>]+\/>/g, "").trim();
+
+            // タグ除去後が空の場合、コマンド情報を使う
+            if (!text && (cmdMatch?.[1] || cmdMsgMatch?.[1])) {
+              const cmd = cmdMsgMatch?.[1] || "";
+              const args = cmdMatch?.[1] || "";
+              text = args ? `/${cmd} ${args}`.trim() : `/${cmd}`.trim();
+            }
 
             if (text && text.length > 0) {
               return text.length > 23 ? text.substring(0, 20) + "..." : text;
