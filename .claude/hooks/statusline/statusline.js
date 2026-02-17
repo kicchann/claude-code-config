@@ -262,7 +262,10 @@ const getSessionSummary = (transcriptPath) => {
 
       for (const entry of Object.values(entries)) {
         if (entry.sessionId === sessionId && entry.summary) {
-          return truncateByWidth(entry.summary, SUMMARY_MAX_WIDTH);
+          const summary = entry.summary;
+          return summary.length > 23
+            ? summary.substring(0, 20) + "..."
+            : summary;
         }
       }
     }
@@ -270,8 +273,8 @@ const getSessionSummary = (transcriptPath) => {
     // indexに無い場合、transcriptファイルの先頭部分から最初のユーザープロンプトを取得
     if (fs.existsSync(transcriptPath)) {
       const fd = fs.openSync(transcriptPath, "r");
-      const buf = Buffer.alloc(32768); // 先頭32KBを読む（コマンドタグが大きい場合に対応）
-      const bytesRead = fs.readSync(fd, buf, 0, 32768, 0);
+      const buf = Buffer.alloc(8192); // 先頭8KBのみ読む
+      const bytesRead = fs.readSync(fd, buf, 0, 8192, 0);
       fs.closeSync(fd);
       const content = buf.toString("utf-8", 0, bytesRead);
       const lines = content.split("\n").filter((line) => line.trim());
@@ -321,7 +324,7 @@ const getSessionSummary = (transcriptPath) => {
             }
 
             if (text && text.length > 0) {
-              return truncateByWidth(text, SUMMARY_MAX_WIDTH);
+              return text.length > 23 ? text.substring(0, 20) + "..." : text;
             }
           }
         } catch (e) {
@@ -529,6 +532,8 @@ const buildStatusLine = (input) => {
         : "\x1b[32m"; // Green
 
   const osEmoji = getPlatformEmoji();
+  const summary = getSessionSummary(data.transcript_path);
+  const summaryPart = summary ? ` 📝 \x1b[36m${summary}\x1b[0m` : "";
   const modelColor = getModelColor(model);
   const gitBranch = getGitBranch(
     data.workspace?.current_dir || data.cwd || ".",
@@ -536,31 +541,7 @@ const buildStatusLine = (input) => {
   const locationPart = gitBranch
     ? ` 🔀 \x1b[96m${gitBranch}\x1b[0m`
     : ` 📁 \x1b[37m${currentDir}\x1b[0m`;
-  // issueタイトルを優先（OSC 8リンク付き）、なければセッションサマリー
-  const cwdPath = data.workspace?.current_dir || data.cwd || ".";
-  const issueInfo = getIssueInfo(gitBranch, cwdPath);
-  let summaryPart = "";
-  if (issueInfo) {
-    const link = (text, url) => `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
-    const prNum = getPrNumber(gitBranch, issueInfo.repo);
-    const issueText = truncateByWidth(
-      `#${gitBranch} ${issueInfo.title}`,
-      SUMMARY_MAX_WIDTH,
-    );
-    const issueUrl = issueInfo.repo
-      ? `https://github.com/${issueInfo.repo}/issues/${gitBranch}`
-      : "";
-    const issuePart = issueUrl ? link(issueText, issueUrl) : issueText;
-    const prPart =
-      prNum && issueInfo.repo
-        ? ` ${link(`PR#${prNum}`, `https://github.com/${issueInfo.repo}/pull/${prNum}`)}`
-        : "";
-    summaryPart = ` 📝 \x1b[36m${issuePart}${prPart}\x1b[0m`;
-  } else {
-    const summary = getSessionSummary(data.transcript_path);
-    if (summary) summaryPart = ` 📝 \x1b[36m${summary}\x1b[0m`;
-  }
-  return `${osEmoji} ${modelColor}[${model}]\x1b[0m${summaryPart} ${locationPart} 🪙 ${percentageColor}${percentage}%\x1b[0m`;
+  return `${osEmoji} ${modelColor}[${model}]\x1b[0m${locationPart}${summaryPart} 🪙 ${percentageColor}${percentage}%\x1b[0m`;
 };
 
 const chunks = [];

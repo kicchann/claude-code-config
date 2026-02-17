@@ -107,14 +107,35 @@ No issues found. Checked for bugs and CLAUDE.md compliance.
 
 ## 10. Next Step Prompt
 
-After completing the review, use AskUserQuestion to prompt for the next workflow step:
+After completing the review, use AskUserQuestion to prompt for the next workflow step.
+**Branch based on whether issues were found:**
+
+### When issues WERE found:
 
 ```yaml
 AskUserQuestion:
-  question: "レビュー完了。次のステップに進みますか？"
+  question: "レビューで問題が見つかりました。次のステップに進みますか？"
   header: "次のステップ"
   options:
-    - label: "/check-merge を実行"
+    - label: "/fix-review-issues を実行 (Recommended)"
+      description: "レビュー指摘事項を修正"
+    - label: "人間/AIレビューを依頼"
+      description: "追加のレビュアーを選択"
+    - label: "終了"
+      description: "レビューのみで終了（手動で修正）"
+  multiSelect: false
+```
+
+If user selects "/fix-review-issues を実行", invoke the Skill tool with `skill: "fix-review-issues"`.
+
+### When NO issues were found:
+
+```yaml
+AskUserQuestion:
+  question: "レビュー完了（問題なし）。次のステップに進みますか？"
+  header: "次のステップ"
+  options:
+    - label: "/check-merge を実行 (Recommended)"
       description: "マージ前最終チェックを実行"
     - label: "人間/AIレビューを依頼"
       description: "追加のレビュアーを選択"
