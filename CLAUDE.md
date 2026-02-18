@@ -121,6 +121,13 @@
 - Phase 2: `/review-pr` → `/check-merge` → [Merge or Human Review]
 - Phase 3: `/close-issue` → `/create-retrospective`
 
+**フロー間の振る舞い:**
+
+- 各フローの区切り（コマンド完了時）では、完了報告だけで終わらず **必ず次のステップへの提案を含める** こと
+- 選択肢がある場合は `AskUserQuestion` で選択肢を提示し、ユーザーの判断を仰ぐこと
+- 例: `/test` 完了後 →「テスト全件パス。次は `/lint` を実行しますか？」
+- 例: `/commit-push-pr` 完了後 →「PR作成済み。次のステップを選択してください」→ AskUserQuestion で `/review-pr` / 別issueに着手 / 終了 を提示
+
 ## 開発ガイド
 
 コマンド追加方法、計画ファイル管理、GitHub CLI使用法については `.claude/rules/command-development.md` を参照
