@@ -10,7 +10,7 @@ paths: /never/match/folder/**
 
 - Phase 1: `/check-branch` → `/feature-dev` → `/test` → `/lint` → `/update-claude-md` → `/commit-push-pr`
 - Phase 2: `/review-pr` → `/check-merge` → [Merge or Human Review]
-- Phase 3: `/close-issue` → `/create-retrospective`
+- Phase 3: `/create-retrospective`
 
 ## Composite Commands (optional shortcuts)
 
@@ -35,8 +35,9 @@ paths: /never/match/folder/**
 
 ## Phase 3: Post-merge
 
-12. `/close-issue #N` - Close related issue
 13. `/create-retrospective` - Create retrospective memo (optional)
+**Note**: issueのクローズは `/commit-push-pr` でPR本文に `Closes #N` を含めることで、マージ時に自動クローズされる。
+
 
 ## On Conflict
 
