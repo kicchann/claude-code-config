@@ -98,21 +98,16 @@ git diff --stat origin/main...HEAD 2>/dev/null || git diff --stat origin/master.
 
 **重要**: PRマージはセキュリティ上の理由から自動実行しません（Human-in-the-loop設計）。
 
-マージ可能な状態（✅ マージ可能）の場合、以下を提示:
+マージ可能な状態（✅ マージ可能）の場合、GitHub UIのリンクのみ提示:
 
 ```text
 ## マージ方法
 
-**GitHub UI:**
+以下のURLからWeb UIでマージしてください:
 https://github.com/<owner>/<repo>/pull/<PR番号>
-
-**コマンドライン:**
-gh pr merge -R <owner>/<repo> <PR番号> --merge --delete-branch
-
-**マージ後のローカル操作:**
-git checkout main && git pull origin main
-git branch -d <branch-name>
 ```
+
+**注意**: CLIからのマージ（`gh pr merge`）は禁止。必ずGitHub Web UIから実行すること。
 
 マージ不可の場合は、チェック結果と推奨アクションのみ報告する。
 
